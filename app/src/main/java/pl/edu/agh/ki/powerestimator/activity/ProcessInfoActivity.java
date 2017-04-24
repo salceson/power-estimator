@@ -1,10 +1,12 @@
 package pl.edu.agh.ki.powerestimator.activity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -19,7 +21,7 @@ import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfiles;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesImpl;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesListener;
 
-public class MainActivity extends AppCompatActivity {
+public class ProcessInfoActivity extends AppCompatActivity {
     private static final int MAX_ENTRIES = 50;
 
     private LineChart chart = null;
@@ -31,13 +33,19 @@ public class MainActivity extends AppCompatActivity {
 
     private float lastX = 0.0f;
 
+    private final List<Entry> cpuEntries = new ArrayList<>();
+    private final List<Entry> wifiEntries = new ArrayList<>();
+    private final List<Entry> mobileEntries = new ArrayList<>();
+
+    private PowerProfiles powerProfiles;
+
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            Bundle data = msg.getData();
-            float cpuUsageMAh = data.getFloat("cpu");
-            float wifiMAh = data.getFloat("wifi");
-            float mobileMAh = data.getFloat("mobile");
+            final Bundle data = msg.getData();
+            final float cpuUsageMAh = data.getFloat("cpu");
+            final float wifiMAh = data.getFloat("wifi");
+            final float mobileMAh = data.getFloat("mobile");
 
             lastX += 1.0f;
 
@@ -61,33 +69,51 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private PowerProfilesListener listener = new PowerProfilesListener() {
-        @Override
-        public void onNewData(float cpuUsageMAh,
-                              float wifiTransferUsageMAh,
-                              float mobileTransferUsageMAh) {
-            Message message = new Message();
-            Bundle data = new Bundle();
-            data.putFloat("cpu", cpuUsageMAh);
-            data.putFloat("wifi", wifiTransferUsageMAh);
-            data.putFloat("mobile", mobileTransferUsageMAh);
-            message.setData(data);
-            handler.sendMessage(message);
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_process_info);
+
+        powerProfiles = new PowerProfilesImpl(getApplicationContext());
+
+        final Intent intent = getIntent();
+        final Bundle extra = intent.getExtras();
+
+        final int pid = extra.getInt("pid");
+        final int uid = extra.getInt("uid");
+        final String name = extra.getString("name");
+
+        final TextView view = (TextView) findViewById(R.id.processName);
+        view.setText(name);
 
         chart = (LineChart) findViewById(R.id.chart);
 
-        PowerProfiles powerProfiles = new PowerProfilesImpl(getApplicationContext(), listener);
+        final PowerProfilesListener listener = new PowerProfilesListener() {
+            @Override
+            public int getPid() {
+                return pid;
+            }
 
-        List<Entry> cpuEntries = new ArrayList<>();
-        List<Entry> wifiEntries = new ArrayList<>();
-        List<Entry> mobileEntries = new ArrayList<>();
+            @Override
+            public int getUid() {
+                return uid;
+            }
+
+            @Override
+            public void onNewData(float cpuUsageMAh,
+                                  float wifiTransferUsageMAh,
+                                  float mobileTransferUsageMAh) {
+                final Message message = new Message();
+                final Bundle data = new Bundle();
+                data.putFloat("cpu", cpuUsageMAh);
+                data.putFloat("wifi", wifiTransferUsageMAh);
+                data.putFloat("mobile", mobileTransferUsageMAh);
+                message.setData(data);
+                handler.sendMessage(message);
+            }
+        };
+
+        powerProfiles.addListener(listener);
 
         cpuEntries.add(new Entry(lastX, 0.0f));
         wifiEntries.add(new Entry(lastX, 0.0f));
@@ -131,7 +157,17 @@ public class MainActivity extends AppCompatActivity {
         chart.getAxisRight().setDrawLabels(false);
         chart.setDescription(null);
         chart.invalidate();
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
         powerProfiles.startMeasurements();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        powerProfiles.stopMeasurements();
     }
 }

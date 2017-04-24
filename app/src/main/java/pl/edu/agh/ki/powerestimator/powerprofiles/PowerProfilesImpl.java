@@ -3,20 +3,22 @@ package pl.edu.agh.ki.powerestimator.powerprofiles;
 import android.content.Context;
 import android.net.TrafficStats;
 import android.net.wifi.WifiManager;
-import android.os.Process;
 import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.RandomAccessFile;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class PowerProfilesImpl implements PowerProfiles {
     private final Context context;
-    private final PowerProfilesListener listener;
 
     private static final int SECONDS_PER_HOUR = 3600;
     // _SC_CLK_TCK
@@ -25,84 +27,68 @@ public class PowerProfilesImpl implements PowerProfiles {
 
     private static final String LOG_TAG = "PPImpl";
 
-    private static final Map<String, Double> COMPONENTS_DRAIN_MAH = new HashMap<>();
+    private static final String WIFI_KEY = "wifi";
+    private static final String MOBILE_KEY = "mobile";
 
     private static final ScheduledExecutorService EXECUTOR_SERVICE =
             Executors.newSingleThreadScheduledExecutor();
 
-    private static CpuInfo previousCpuInfo;
-    private static TransferInfo previousTransferInfo;
-    private static long previousMeasurementMillis;
+    private List<PowerProfilesListener> listeners = new CopyOnWriteArrayList<>();
+    private Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
+    private Map<Integer, TransferInfo> previousTransferInfos = new ConcurrentHashMap<>();
 
-    public PowerProfilesImpl(Context context, PowerProfilesListener listener) {
+    private ScheduledFuture<?> future;
+
+    public PowerProfilesImpl(Context context) {
         this.context = context;
-        this.listener = listener;
     }
 
     @Override
     public void startMeasurements() {
         try {
-            COMPONENTS_DRAIN_MAH.put("wifi", 0.0);
-            COMPONENTS_DRAIN_MAH.put("mobile", 0.0);
-
-            EXECUTOR_SERVICE.scheduleAtFixedRate(new Runnable() {
+            future = EXECUTOR_SERVICE.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
-                    measureTransferDrains(1.0);
-                    float cpuMAh = getCPUMAh();
-                    listener.onNewData(
-                            cpuMAh,
-                            COMPONENTS_DRAIN_MAH.get("wifi").floatValue(),
-                            COMPONENTS_DRAIN_MAH.get("mobile").floatValue()
-                    );
+                    for (PowerProfilesListener listener : listeners) {
+                        int pid = listener.getPid();
+                        int uid = listener.getUid();
+                        float cpuMAh = getCPUMAh(pid);
+                        Map<String, Float> transferMAh = measureTransferDrains(1.0, uid);
+                        listener.onNewData(
+                                cpuMAh, transferMAh.get(WIFI_KEY), transferMAh.get(MOBILE_KEY)
+                        );
+                    }
                 }
             }, 1000, 1000, TimeUnit.MILLISECONDS);
-
-            previousTransferInfo = new TransferInfo();
-            previousCpuInfo = readCpuInfo();
-            previousMeasurementMillis = System.currentTimeMillis();
         } catch (Exception e) {
             Log.e(LOG_TAG, "Error while starting measurements", e);
         }
     }
 
-    private void stopMeasurements() {
-//        try {
-//            CpuInfo nextCpuInfo = readCpuInfo();
-//            long cpuActiveTime = nextCpuInfo.activeTime - previousCpuInfo.activeTime;
-//            long cpuIdleTime = nextCpuInfo.idleTime - previousCpuInfo.idleTime;
-//            int ticksPerHour = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
-//            double cpuDrainMAh = (getAveragePower("cpu.idle") * cpuIdleTime / ticksPerHour)
-//                    + (getAveragePower("cpu.active") * cpuActiveTime / ticksPerHour)
-//                    + (getAveragePower("cpu.idle") * cpuActiveTime / ticksPerHour);
-//            previousCpuInfo = nextCpuInfo;
-//
-//            long measurementInterval = System.currentTimeMillis() - previousMeasurementMillis;
-//            if (measurementInterval > 100 && measurementInterval < 900) {
-//                measureTransferDrains(measurementInterval / 1000);
-//            }
-//
-//            obj.put("cpuActivePower", getAveragePower("cpu.active", 3));
-//            obj.put("wifiActivePower", getAveragePower("wifi.active"));
-//            obj.put("mobileActivePower", getAveragePower("radio.active"));
-//
-//            obj.put("cpu", cpuDrainMAh);
-//            obj.put("wifi", COMPONENTS_DRAIN_MAH.get("wifi"));
-//            obj.put("mobile", COMPONENTS_DRAIN_MAH.get("mobile"));
-//            double total = cpuDrainMAh + COMPONENTS_DRAIN_MAH.get("wifi") + COMPONENTS_DRAIN_MAH.get("mobile");
-//            obj.put("total", total);
-//            obj.put("total%", total / getAveragePower("battery.capacity") * 100);
-//        } catch (Exception e) {
-//            callbackContext.error(e.getCause() + ": " + e.getMessage());
-//        }
-//        callbackContext.success(obj);
+    @Override
+    public void stopMeasurements() {
+        future.cancel(true);
     }
 
+    @Override
+    public void addListener(PowerProfilesListener listener) {
+        listeners.add(listener);
+        previousCpuInfos.put(listener.getPid(), new CpuInfo(0, 0));
+        previousTransferInfos.put(listener.getUid(), new TransferInfo());
+    }
 
     @Override
-    public float getCPUMAh() {
+    public void removeListener(PowerProfilesListener listener) {
+        listeners.remove(listener);
+        previousCpuInfos.remove(listener.getPid());
+        previousTransferInfos.remove(listener.getUid());
+    }
+
+    private float getCPUMAh(int pid) {
         try {
-            CpuInfo nextCpuInfo = readCpuInfo();
+            CpuInfo previousCpuInfo = previousCpuInfos.get(pid);
+            CpuInfo nextCpuInfo = readCpuInfo(pid);
+            previousCpuInfos.put(pid, nextCpuInfo);
             long cpuActiveTime = nextCpuInfo.activeTime - previousCpuInfo.activeTime;
             long cpuIdleTime = nextCpuInfo.idleTime - previousCpuInfo.idleTime;
             int ticksPerHour = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
@@ -116,10 +102,12 @@ public class PowerProfilesImpl implements PowerProfiles {
         }
     }
 
-    private void measureTransferDrains(double scale) {
-        TransferInfo nextTransferInfo = new TransferInfo();
-        double wifiDrainMAh = COMPONENTS_DRAIN_MAH.get("wifi");
-        double mobileDrainMAh = COMPONENTS_DRAIN_MAH.get("mobile");
+    private Map<String, Float> measureTransferDrains(double scale, int uid) {
+        TransferInfo nextTransferInfo = new TransferInfo(uid);
+        TransferInfo previousTransferInfo = previousTransferInfos.get(uid);
+        previousTransferInfos.put(uid, nextTransferInfo);
+        double wifiDrainMAh = 0;
+        double mobileDrainMAh = 0;
         try {
             if (previousTransferInfo.wasWifiReceiving(nextTransferInfo)) {
                 wifiDrainMAh += getAveragePower("wifi.active") / SECONDS_PER_HOUR * scale;
@@ -131,11 +119,13 @@ public class PowerProfilesImpl implements PowerProfiles {
                     || previousTransferInfo.wasMobileTransmitting(nextTransferInfo)) {
                 mobileDrainMAh += getAveragePower("radio.active") / SECONDS_PER_HOUR * scale;
             }
-        } catch (Exception ignore) {
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Error while calculating transfer usage", e);
         }
-        COMPONENTS_DRAIN_MAH.put("wifi", wifiDrainMAh);
-        COMPONENTS_DRAIN_MAH.put("mobile", mobileDrainMAh);
-        previousMeasurementMillis = System.currentTimeMillis();
+        Map<String, Float> trafficMAh = new HashMap<>();
+        trafficMAh.put(WIFI_KEY, (float) wifiDrainMAh);
+        trafficMAh.put(MOBILE_KEY, (float) mobileDrainMAh);
+        return trafficMAh;
     }
 
     private double getAveragePower(String componentState) throws Exception {
@@ -164,8 +154,8 @@ public class PowerProfilesImpl implements PowerProfiles {
                 .invoke(powerProfile, args));
     }
 
-    private CpuInfo readCpuInfo() throws Exception {
-        RandomAccessFile reader = new RandomAccessFile("/proc/" + Process.myPid() + "/stat", "r");
+    private CpuInfo readCpuInfo(int pid) throws Exception {
+        RandomAccessFile reader = new RandomAccessFile("/proc/" + pid + "/stat", "r");
         String line = reader.readLine();
         reader.close();
 
@@ -201,14 +191,21 @@ public class PowerProfilesImpl implements PowerProfiles {
         long mobileTxBytes;
 
         TransferInfo() {
+            wifiRxBytes = 0;
+            wifiTxBytes = 0;
+            mobileRxBytes = 0;
+            mobileTxBytes = 0;
+        }
+
+        TransferInfo(int uid) {
             WifiManager wifi = (WifiManager) context.getApplicationContext()
                     .getSystemService(Context.WIFI_SERVICE);
             if (wifi.isWifiEnabled()) {
-                wifiRxBytes = TrafficStats.getUidRxBytes(Process.myUid());
-                wifiTxBytes = TrafficStats.getUidTxBytes(Process.myUid());
+                wifiRxBytes = TrafficStats.getUidRxBytes(uid);
+                wifiTxBytes = TrafficStats.getUidTxBytes(uid);
             } else {
-                mobileRxBytes = TrafficStats.getUidRxBytes(Process.myUid());
-                mobileTxBytes = TrafficStats.getUidTxBytes(Process.myUid());
+                mobileRxBytes = TrafficStats.getUidRxBytes(uid);
+                mobileTxBytes = TrafficStats.getUidTxBytes(uid);
             }
         }
 
