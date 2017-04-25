@@ -1,10 +1,12 @@
 package pl.edu.agh.ki.powerestimator.activity;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -26,6 +28,9 @@ import pl.edu.agh.ki.powerestimator.model.ProcessListItem;
 import pl.edu.agh.ki.powerestimator.model.ProcessListItemAdapter;
 
 public class ProcessesListActivity extends AppCompatActivity {
+
+    private static final String LOG_TAG = ProcessesListActivity.class.getSimpleName();
+
     private final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> future;
     private ProcessListItemAdapter adapter;
@@ -73,8 +78,16 @@ public class ProcessesListActivity extends AppCompatActivity {
                 ArrayList<ProcessListItem> newProcesses = new ArrayList<>();
                 final List<AndroidAppProcess> processes = AndroidProcesses.getRunningAppProcesses();
                 for (AndroidAppProcess process : processes) {
+                    String processName;
+                    try {
+                        processName = process.getPackageInfo(getApplicationContext(), 0).applicationInfo.loadLabel(getPackageManager()).toString();
+                    } catch (PackageManager.NameNotFoundException e) {
+                        Log.w(LOG_TAG, e.getMessage());
+                        processName = process.getPackageName();
+                    }
+
                     final ProcessListItem item = new ProcessListItem(
-                            process.uid, process.pid, process.name
+                            process.uid, process.pid, processName
                     );
                     newProcesses.add(item);
                 }
