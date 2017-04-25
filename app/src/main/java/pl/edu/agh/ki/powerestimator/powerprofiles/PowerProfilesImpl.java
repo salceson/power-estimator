@@ -78,9 +78,9 @@ public class PowerProfilesImpl implements PowerProfiles {
     }
 
     @Override
-    public void addListener(PowerProfilesListener listener) {
+    public void addListener(PowerProfilesListener listener) throws Exception {
         listeners.add(listener);
-        previousCpuInfos.put(listener.getPid(), new CpuInfo(0, 0));
+        previousCpuInfos.put(listener.getPid(), readCpuInfo(listener.getPid()));
         previousTransferInfos.put(listener.getUid(), new TransferInfo());
     }
 
@@ -105,7 +105,7 @@ public class PowerProfilesImpl implements PowerProfiles {
             return (float) cpuDrainMAh;
         } catch (Exception e) {
             Log.e(LOG_TAG, "Error while calculating CPU usage", e);
-            return Float.NaN;
+            return 0;
         }
     }
 

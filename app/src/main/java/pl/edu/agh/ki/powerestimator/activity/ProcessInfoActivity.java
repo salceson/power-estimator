@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -122,7 +123,11 @@ public class ProcessInfoActivity extends AppCompatActivity {
             }
         };
 
-        powerProfiles.addListener(listener);
+        try {
+            powerProfiles.addListener(listener);
+        } catch (Exception e) {
+            Log.e(ProcessInfoActivity.class.getSimpleName(), "Error while adding listner", e);
+        }
 
         screenEntries.add(new Entry(lastX, 0.0f));
         cpuEntries.add(new Entry(lastX, 0.0f));
