@@ -6,9 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+
+import com.jaredrummler.android.processes.AndroidProcesses;
+import com.jaredrummler.android.processes.models.AndroidAppProcess;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -61,19 +65,22 @@ public class ProcessesListActivity extends AppCompatActivity {
             @Override
             public void run() {
                 items.clear();
-                for (RunningAppProcessInfo processInfo : activityManager.getRunningAppProcesses()) {
+                Log.i(ProcessesListActivity.class.getSimpleName(), "Refreshing processes list");
+                final List<AndroidAppProcess> processes = AndroidProcesses.getRunningAppProcesses();
+                for (AndroidAppProcess process : processes) {
                     final ProcessListItem item = new ProcessListItem(
-                            processInfo.uid, processInfo.pid, processInfo.processName
+                            process.uid, process.pid, process.name
                     );
                     items.add(item);
-                    Collections.sort(items, new Comparator<ProcessListItem>() {
-                        @Override
-                        public int compare(ProcessListItem o1, ProcessListItem o2) {
-                            return o1.getName().compareTo(o2.getName());
-                        }
-                    });
-                    adapter.notifyDataSetChanged();
                 }
+
+                Collections.sort(items, new Comparator<ProcessListItem>() {
+                    @Override
+                    public int compare(ProcessListItem o1, ProcessListItem o2) {
+                        return o1.getName().compareTo(o2.getName());
+                    }
+                });
+                adapter.notifyDataSetChanged();
             }
         }, 10, 1000, TimeUnit.MILLISECONDS);
     }
