@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private LineChart chart = null;
     private LineData lineData = null;
 
+    private LineDataSet screenDataSet = null;
     private LineDataSet cpuDataSet = null;
     private LineDataSet wifiDataSet = null;
     private LineDataSet mobileDataSet = null;
@@ -35,16 +36,21 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             Bundle data = msg.getData();
+            float screenUsageMAh = data.getFloat("screen");
             float cpuUsageMAh = data.getFloat("cpu");
             float wifiMAh = data.getFloat("wifi");
             float mobileMAh = data.getFloat("mobile");
 
             lastX += 1.0f;
 
+            screenDataSet.addEntry(new Entry(lastX, screenUsageMAh));
             cpuDataSet.addEntry(new Entry(lastX, cpuUsageMAh));
             wifiDataSet.addEntry(new Entry(lastX, wifiMAh));
             mobileDataSet.addEntry(new Entry(lastX, mobileMAh));
 
+            while (screenDataSet.getEntryCount() > MAX_ENTRIES) {
+                screenDataSet.removeFirst();
+            }
             while (cpuDataSet.getEntryCount() > MAX_ENTRIES) {
                 cpuDataSet.removeFirst();
             }
@@ -63,11 +69,13 @@ public class MainActivity extends AppCompatActivity {
 
     private PowerProfilesListener listener = new PowerProfilesListener() {
         @Override
-        public void onNewData(float cpuUsageMAh,
+        public void onNewData(float screenUsageMAh,
+                              float cpuUsageMAh,
                               float wifiTransferUsageMAh,
                               float mobileTransferUsageMAh) {
             Message message = new Message();
             Bundle data = new Bundle();
+            data.putFloat("screen", screenUsageMAh);
             data.putFloat("cpu", cpuUsageMAh);
             data.putFloat("wifi", wifiTransferUsageMAh);
             data.putFloat("mobile", mobileTransferUsageMAh);
@@ -85,13 +93,26 @@ public class MainActivity extends AppCompatActivity {
 
         PowerProfiles powerProfiles = new PowerProfilesImpl(getApplicationContext(), listener);
 
+        List<Entry> screenEntries = new ArrayList<>();
         List<Entry> cpuEntries = new ArrayList<>();
         List<Entry> wifiEntries = new ArrayList<>();
         List<Entry> mobileEntries = new ArrayList<>();
 
+        screenEntries.add(new Entry(lastX, 0.0f));
         cpuEntries.add(new Entry(lastX, 0.0f));
         wifiEntries.add(new Entry(lastX, 0.0f));
         mobileEntries.add(new Entry(lastX, 0.0f));
+
+        screenDataSet = new LineDataSet(screenEntries, "Screen usage [mAh]");
+        screenDataSet.setLineWidth(2f);
+        screenDataSet.setValueTextColor(Color.rgb(0, 0, 0));
+        screenDataSet.setValueTextSize(10f);
+        screenDataSet.setColor(Color.rgb(255, 255, 0));
+        screenDataSet.setDrawFilled(false);
+        screenDataSet.setDrawValues(false);
+        screenDataSet.setDrawCircles(false);
+        screenDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        screenDataSet.setCubicIntensity(0.1f);
 
         cpuDataSet = new LineDataSet(cpuEntries, "CPU usage [mAh]");
         cpuDataSet.setLineWidth(2f);
@@ -126,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         mobileDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         mobileDataSet.setCubicIntensity(0.1f);
 
-        lineData = new LineData(cpuDataSet, wifiDataSet, mobileDataSet);
+        lineData = new LineData(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
         chart.setData(lineData);
         chart.getAxisRight().setDrawLabels(false);
         chart.setDescription(null);

@@ -3,6 +3,7 @@ package pl.edu.agh.ki.powerestimator.powerprofiles;
 import android.content.Context;
 import android.net.TrafficStats;
 import android.net.wifi.WifiManager;
+import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
 import android.util.Log;
@@ -14,10 +15,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
+import static android.provider.Settings.System.getInt;
+
 public class PowerProfilesImpl implements PowerProfiles {
     private final Context context;
     private final PowerProfilesListener listener;
 
+    private static final int MAX_BRIGHTNESS = 255;
     private static final int SECONDS_PER_HOUR = 3600;
     // _SC_CLK_TCK
     private static final int CLOCK_TICKS_PER_SECOND = 100;
@@ -42,15 +47,17 @@ public class PowerProfilesImpl implements PowerProfiles {
     @Override
     public void startMeasurements() {
         try {
+            COMPONENTS_DRAIN_MAH.put("screen", 0.0);
             COMPONENTS_DRAIN_MAH.put("wifi", 0.0);
             COMPONENTS_DRAIN_MAH.put("mobile", 0.0);
 
             EXECUTOR_SERVICE.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
-                    measureTransferDrains(1.0);
+                    measureComponentsDrains(1.0);
                     float cpuMAh = getCPUMAh();
                     listener.onNewData(
+                            COMPONENTS_DRAIN_MAH.get("screen").floatValue(),
                             cpuMAh,
                             COMPONENTS_DRAIN_MAH.get("wifi").floatValue(),
                             COMPONENTS_DRAIN_MAH.get("mobile").floatValue()
@@ -79,7 +86,7 @@ public class PowerProfilesImpl implements PowerProfiles {
 //
 //            long measurementInterval = System.currentTimeMillis() - previousMeasurementMillis;
 //            if (measurementInterval > 100 && measurementInterval < 900) {
-//                measureTransferDrains(measurementInterval / 1000);
+//                measureComponentsDrains(measurementInterval / 1000);
 //            }
 //
 //            obj.put("cpuActivePower", getAveragePower("cpu.active", 3));
@@ -116,11 +123,19 @@ public class PowerProfilesImpl implements PowerProfiles {
         }
     }
 
-    private void measureTransferDrains(double scale) {
+    private void measureComponentsDrains(double scale) {
+        double screenDrainMAh = COMPONENTS_DRAIN_MAH.get("screen");
         TransferInfo nextTransferInfo = new TransferInfo();
         double wifiDrainMAh = COMPONENTS_DRAIN_MAH.get("wifi");
         double mobileDrainMAh = COMPONENTS_DRAIN_MAH.get("mobile");
         try {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            if (pm.isScreenOn()) {
+                float brightness = getInt(context.getContentResolver(), SCREEN_BRIGHTNESS);
+                screenDrainMAh += (getAveragePower("screen.on") + (brightness / MAX_BRIGHTNESS
+                        * getAveragePower("screen.full"))) / SECONDS_PER_HOUR * scale;
+            }
+
             if (previousTransferInfo.wasWifiReceiving(nextTransferInfo)) {
                 wifiDrainMAh += getAveragePower("wifi.active") / SECONDS_PER_HOUR * scale;
             }
@@ -133,6 +148,7 @@ public class PowerProfilesImpl implements PowerProfiles {
             }
         } catch (Exception ignore) {
         }
+        COMPONENTS_DRAIN_MAH.put("screen", screenDrainMAh);
         COMPONENTS_DRAIN_MAH.put("wifi", wifiDrainMAh);
         COMPONENTS_DRAIN_MAH.put("mobile", mobileDrainMAh);
         previousMeasurementMillis = System.currentTimeMillis();
