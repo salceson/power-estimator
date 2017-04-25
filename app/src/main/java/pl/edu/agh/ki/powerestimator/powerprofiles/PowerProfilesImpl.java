@@ -19,10 +19,10 @@ import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
 import static android.provider.Settings.System.getInt;
 
 public class PowerProfilesImpl implements PowerProfiles {
-    public static final int MAX_BRIGHTNESS = 255;
     private final Context context;
     private final PowerProfilesListener listener;
 
+    private static final int MAX_BRIGHTNESS = 255;
     private static final int SECONDS_PER_HOUR = 3600;
     // _SC_CLK_TCK
     private static final int CLOCK_TICKS_PER_SECOND = 100;
