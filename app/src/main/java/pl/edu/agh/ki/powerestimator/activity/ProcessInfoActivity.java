@@ -129,55 +129,31 @@ public class ProcessInfoActivity extends AppCompatActivity {
         wifiEntries.add(new Entry(lastX, 0.0f));
         mobileEntries.add(new Entry(lastX, 0.0f));
 
-        screenDataSet = new LineDataSet(screenEntries, "Screen usage [mAh]");
-        screenDataSet.setLineWidth(2f);
-        screenDataSet.setValueTextColor(Color.rgb(0, 0, 0));
-        screenDataSet.setValueTextSize(10f);
-        screenDataSet.setColor(Color.rgb(255, 255, 0));
-        screenDataSet.setDrawFilled(false);
-        screenDataSet.setDrawValues(false);
-        screenDataSet.setDrawCircles(false);
-        screenDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        screenDataSet.setCubicIntensity(0.1f);
-
-        cpuDataSet = new LineDataSet(cpuEntries, "CPU usage [mAh]");
-        cpuDataSet.setLineWidth(2f);
-        cpuDataSet.setValueTextColor(Color.rgb(0, 0, 0));
-        cpuDataSet.setValueTextSize(10f);
-        cpuDataSet.setColor(Color.rgb(255, 0, 0));
-        cpuDataSet.setDrawFilled(false);
-        cpuDataSet.setDrawValues(false);
-        cpuDataSet.setDrawCircles(false);
-        cpuDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        cpuDataSet.setCubicIntensity(0.1f);
-
-        wifiDataSet = new LineDataSet(wifiEntries, "WiFi usage [mAh]");
-        wifiDataSet.setLineWidth(2f);
-        wifiDataSet.setValueTextColor(Color.rgb(0, 0, 0));
-        wifiDataSet.setValueTextSize(10f);
-        wifiDataSet.setColor(Color.rgb(0, 255, 0));
-        wifiDataSet.setDrawFilled(false);
-        wifiDataSet.setDrawValues(false);
-        wifiDataSet.setDrawCircles(false);
-        wifiDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        wifiDataSet.setCubicIntensity(0.1f);
-
-        mobileDataSet = new LineDataSet(mobileEntries, "3G usage [mAh]");
-        mobileDataSet.setLineWidth(2f);
-        mobileDataSet.setValueTextColor(Color.rgb(0, 0, 0));
-        mobileDataSet.setValueTextSize(10f);
-        mobileDataSet.setColor(Color.rgb(0, 0, 255));
-        mobileDataSet.setDrawFilled(false);
-        mobileDataSet.setDrawValues(false);
-        mobileDataSet.setDrawCircles(false);
-        mobileDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        mobileDataSet.setCubicIntensity(0.1f);
+        screenDataSet = createDataSet(screenEntries, "Screen usage [mAh]", Color.rgb(255, 255, 0));
+        cpuDataSet = createDataSet(cpuEntries, "CPU usage [mAh]", Color.rgb(255, 0, 0));
+        wifiDataSet = createDataSet(wifiEntries, "WiFi usage [mAh]", Color.rgb(0, 255, 0));
+        mobileDataSet = createDataSet(mobileEntries, "3G usage [mAh]", Color.rgb(0, 0, 255));
 
         lineData = new LineData(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
+
         chart.setData(lineData);
         chart.getAxisRight().setDrawLabels(false);
         chart.setDescription(null);
         chart.invalidate();
+    }
+
+    private LineDataSet createDataSet(List<Entry> entries, String label, int color) {
+        final LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setLineWidth(2f);
+        dataSet.setValueTextColor(Color.rgb(0, 0, 0));
+        dataSet.setValueTextSize(10f);
+        dataSet.setColor(color);
+        dataSet.setDrawFilled(false);
+        dataSet.setDrawValues(false);
+        dataSet.setDrawCircles(false);
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataSet.setCubicIntensity(0.1f);
+        return dataSet;
     }
 
     @Override
