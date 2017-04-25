@@ -9,15 +9,15 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import pl.edu.agh.ki.powerestimator.R;
 
 public class ProcessListItemAdapter extends BaseAdapter {
-    private final List<ProcessListItem> data;
+    private List<ProcessListItem> data = new CopyOnWriteArrayList<>();
     private final LayoutInflater layoutInflater;
 
-    public ProcessListItemAdapter(Context context, List<ProcessListItem> data) {
-        this.data = data;
+    public ProcessListItemAdapter(Context context) {
         layoutInflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
@@ -57,5 +57,11 @@ public class ProcessListItemAdapter extends BaseAdapter {
         uid.setText(Integer.toString(item.getUid(), 10));
 
         return view;
+    }
+
+    public void changeProcesses(List<ProcessListItem> newData) {
+        data.clear();
+        data.addAll(newData);
+        notifyDataSetChanged();
     }
 }
