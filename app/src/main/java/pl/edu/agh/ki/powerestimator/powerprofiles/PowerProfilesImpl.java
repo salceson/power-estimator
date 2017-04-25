@@ -109,7 +109,7 @@ public class PowerProfilesImpl implements PowerProfiles {
         }
     }
 
-    private Map<String, Float> measureTransferDrains(double scale, int uid) {
+    private Map<String, Float> measureComponentDrains(double scale, int uid) {
         TransferInfo nextTransferInfo = new TransferInfo(uid);
         TransferInfo previousTransferInfo = previousTransferInfos.get(uid);
         previousTransferInfos.put(uid, nextTransferInfo);
@@ -135,7 +135,7 @@ public class PowerProfilesImpl implements PowerProfiles {
                 mobileDrainMAh += getAveragePower("radio.active") / SECONDS_PER_HOUR * scale;
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while calculating transfer usage", e);
+            Log.e(LOG_TAG, "Error while calculating components usage", e);
         }
         Map<String, Float> componentsMAh = new HashMap<>();
         componentsMAh.put(WIFI_KEY, (float) wifiDrainMAh);
