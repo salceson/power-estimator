@@ -151,8 +151,6 @@ public class ProcessInfoActivity extends AppCompatActivity {
         dataSet.setDrawFilled(false);
         dataSet.setDrawValues(false);
         dataSet.setDrawCircles(false);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        dataSet.setCubicIntensity(0.1f);
         return dataSet;
     }
 
