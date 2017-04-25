@@ -2,7 +2,6 @@ package pl.edu.agh.ki.powerestimator.model;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -62,10 +61,7 @@ public class ProcessListItemAdapter extends BaseAdapter {
 
     public void changeProcesses(List<ProcessListItem> newData) {
         data.clear();
-        Log.i(ProcessListItemAdapter.class.getSimpleName(), "Cleared data");
         data.addAll(newData);
-        Log.i(ProcessListItemAdapter.class.getSimpleName(), "Adding data");
         notifyDataSetChanged();
-        Log.i(ProcessListItemAdapter.class.getSimpleName(), "Notified data changed");
     }
 }

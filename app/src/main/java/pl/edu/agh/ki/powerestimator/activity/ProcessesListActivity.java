@@ -30,7 +30,7 @@ public class ProcessesListActivity extends AppCompatActivity {
     private ScheduledFuture<?> future;
     private ProcessListItemAdapter adapter;
 
-    private Handler handler = new Handler() {
+    private final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
