@@ -81,7 +81,7 @@ public class PowerProfilesImpl implements PowerProfiles {
     public void addListener(PowerProfilesListener listener) throws Exception {
         listeners.add(listener);
         previousCpuInfos.put(listener.getPid(), readCpuInfo(listener.getPid()));
-        previousTransferInfos.put(listener.getUid(), new TransferInfo());
+        previousTransferInfos.put(listener.getUid(), new TransferInfo(listener.getUid()));
     }
 
     @Override
@@ -205,13 +205,6 @@ public class PowerProfilesImpl implements PowerProfiles {
         long wifiTxBytes;
         long mobileRxBytes;
         long mobileTxBytes;
-
-        TransferInfo() {
-            wifiRxBytes = 0;
-            wifiTxBytes = 0;
-            mobileRxBytes = 0;
-            mobileTxBytes = 0;
-        }
 
         TransferInfo(int uid) {
             WifiManager wifi = (WifiManager) context.getApplicationContext()
