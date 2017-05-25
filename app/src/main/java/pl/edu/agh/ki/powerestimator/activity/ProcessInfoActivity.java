@@ -15,15 +15,19 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import pl.edu.agh.ki.powerestimator.R;
+import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfiles;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesImpl;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesListener;
 
 public class ProcessInfoActivity extends AppCompatActivity {
     private static final int MAX_ENTRIES = 50;
+    private static final String LOG_TAG = "PInfoActivity";
 
     private LineChart chart = null;
     private LineData lineData = null;
@@ -82,7 +86,11 @@ public class ProcessInfoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_process_info);
 
-        powerProfiles = new PowerProfilesImpl(getApplicationContext());
+        try {
+            powerProfiles = new PowerProfilesImpl(getApplicationContext());
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Could not create PowerProfiles class", e);
+        }
 
         final Intent intent = getIntent();
         final Bundle extra = intent.getExtras();
@@ -108,17 +116,20 @@ public class ProcessInfoActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNewData(float screenUsageMAh,
-                                  float cpuUsageMAh,
-                                  float wifiTransferUsageMAh,
-                                  float mobileTransferUsageMAh) {
+            public List<MeasurementType> getMeasurementTypes() {
+                return Arrays.asList(MeasurementType.CPU, MeasurementType.MOBILE,
+                        MeasurementType.WIFI, MeasurementType.SCREEN);
+            }
+
+            @Override
+            public void onNewData(Map<MeasurementType, Float> data) {
                 final Message message = new Message();
-                final Bundle data = new Bundle();
-                data.putFloat("screen", screenUsageMAh);
-                data.putFloat("cpu", cpuUsageMAh);
-                data.putFloat("wifi", wifiTransferUsageMAh);
-                data.putFloat("mobile", mobileTransferUsageMAh);
-                message.setData(data);
+                final Bundle messageData = new Bundle();
+                messageData.putFloat("screen", data.get(MeasurementType.SCREEN));
+                messageData.putFloat("cpu", data.get(MeasurementType.CPU));
+                messageData.putFloat("wifi", data.get(MeasurementType.WIFI));
+                messageData.putFloat("mobile", data.get(MeasurementType.MOBILE));
+                message.setData(messageData);
                 handler.sendMessage(message);
             }
         };

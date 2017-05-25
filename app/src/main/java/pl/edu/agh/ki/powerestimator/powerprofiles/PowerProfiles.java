@@ -7,5 +7,5 @@ public interface PowerProfiles {
 
     void addListener(PowerProfilesListener listener) throws Exception;
 
-    void removeListener(PowerProfilesListener listener);
+    void removeListener(PowerProfilesListener listener) throws Exception;
 }
