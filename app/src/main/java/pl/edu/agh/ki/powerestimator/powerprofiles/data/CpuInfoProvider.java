@@ -1,5 +1,6 @@
 package pl.edu.agh.ki.powerestimator.powerprofiles.data;
 
+import android.annotation.SuppressLint;
 import android.os.SystemClock;
 
 import java.io.IOException;
@@ -16,10 +17,12 @@ public class CpuInfoProvider implements DataProvider {
     private static final int CLOCK_TICKS_PER_SECOND = 100;
     private static final int MILLIS_PER_CLOCK_TICK = 1000 / CLOCK_TICKS_PER_SECOND;
     private static final int SECONDS_PER_HOUR = 3600;
+    private static final int TICKS_PER_HOUR = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
+    private static final String PROC_INFO_FILE_TEMPLATE = "/proc/%d/stat";
 
     private final PowerProfileObject powerProfileObject;
-    private Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
-    private Map<Integer, Float> measurements = new ConcurrentHashMap<>();
+    private final Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
+    private final Map<Integer, Float> measurements = new ConcurrentHashMap<>();
 
     public CpuInfoProvider(PowerProfileObject powerProfileObject) {
         this.powerProfileObject = powerProfileObject;
@@ -37,11 +40,11 @@ public class CpuInfoProvider implements DataProvider {
         previousCpuInfos.put(pid, nextCpuInfo);
         long cpuActiveTime = nextCpuInfo.activeTime - previousCpuInfo.activeTime;
         long cpuIdleTime = nextCpuInfo.idleTime - previousCpuInfo.idleTime;
-        int ticksPerHour = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
         double cpuDrainMAh = (
-                powerProfileObject.getAveragePower("cpu.idle") * cpuIdleTime / ticksPerHour)
-                + (powerProfileObject.getAveragePower("cpu.active") * cpuActiveTime / ticksPerHour)
-                + (powerProfileObject.getAveragePower("cpu.idle") * cpuActiveTime / ticksPerHour);
+                powerProfileObject.getAveragePower("cpu.idle") * cpuIdleTime / TICKS_PER_HOUR)
+                + (powerProfileObject.getAveragePower("cpu.active")
+                * cpuActiveTime / TICKS_PER_HOUR)
+                + (powerProfileObject.getAveragePower("cpu.idle") * cpuActiveTime / TICKS_PER_HOUR);
         measurements.put(pid, (float) cpuDrainMAh);
     }
 
@@ -49,7 +52,10 @@ public class CpuInfoProvider implements DataProvider {
     public float getMeasurement(MeasurementType measurementType,
                                 int pid, int uid) throws Exception {
         if (measurementType != MeasurementType.CPU) {
-            return Float.NaN;
+            throw new IllegalArgumentException(
+                    "CpuInfoProvider provides only CPU measurements, not of type: "
+                            + measurementType.name()
+            );
         }
         return measurements.get(pid);
     }
@@ -64,8 +70,10 @@ public class CpuInfoProvider implements DataProvider {
         previousCpuInfos.remove(pid);
     }
 
+    @SuppressLint("DefaultLocale")
     private CpuInfo readCpuInfo(int pid) throws IOException {
-        RandomAccessFile reader = new RandomAccessFile("/proc/" + pid + "/stat", "r");
+        RandomAccessFile reader = new RandomAccessFile(
+                String.format(PROC_INFO_FILE_TEMPLATE, pid), "r");
         String line = reader.readLine();
         reader.close();
 
@@ -85,8 +93,8 @@ public class CpuInfoProvider implements DataProvider {
     }
 
     private static class CpuInfo {
-        long activeTime;
-        long idleTime;
+        final long activeTime;
+        final long idleTime;
 
         CpuInfo(long activeTime, long idleTime) {
             this.activeTime = activeTime;

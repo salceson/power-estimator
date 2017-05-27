@@ -54,11 +54,13 @@ public class PowerProfilesImpl implements PowerProfiles {
                     for (PowerProfilesListener listener : listeners) {
                         int pid = listener.getPid();
                         int uid = listener.getUid();
-                        Map<MeasurementType, Float> measurements = new HashMap<>();
-                        List<DataProvider> providersWithMeasurementsTaken = new ArrayList<>();
+
+                        final Map<MeasurementType, Float> measurements = new HashMap<>();
+                        final List<DataProvider> providersWithMeasurementsTaken = new ArrayList<>();
+
                         for (MeasurementType type : listener.getMeasurementTypes()) {
                             try {
-                                DataProvider provider = providerMap.get(type);
+                                final DataProvider provider = providerMap.get(type);
                                 if (!providersWithMeasurementsTaken.contains(provider)) {
                                     provider.takeMeasurements(pid, uid);
                                     providersWithMeasurementsTaken.add(provider);
@@ -67,8 +69,7 @@ public class PowerProfilesImpl implements PowerProfiles {
                                 Log.e(LOG_TAG, "Error while taking measurements of type "
                                         + type.name(), e);
                             }
-                        }
-                        for (MeasurementType type : listener.getMeasurementTypes()) {
+
                             float measurement = Float.NaN;
                             try {
                                 measurement = providerMap.get(type).getMeasurement(type, pid, uid);

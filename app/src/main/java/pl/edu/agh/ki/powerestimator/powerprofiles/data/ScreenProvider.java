@@ -48,7 +48,10 @@ public class ScreenProvider implements DataProvider {
     public float getMeasurement(MeasurementType measurementType,
                                 int pid, int uid) throws Exception {
         if (measurementType != MeasurementType.SCREEN) {
-            return Float.NaN;
+            throw new IllegalArgumentException(
+                    "ScreenProvider provides only SCREEN measurements, not of type: "
+                            + measurementType.name()
+            );
         }
         return measurement;
     }

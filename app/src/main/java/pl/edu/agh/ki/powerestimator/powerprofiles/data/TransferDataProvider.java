@@ -52,7 +52,7 @@ public class TransferDataProvider implements DataProvider {
                     powerProfileObject.getAveragePower("radio.active") / SECONDS_PER_HOUR;
         }
 
-        Map<MeasurementType, Float> newMeasurementsForUid = new HashMap<>();
+        final Map<MeasurementType, Float> newMeasurementsForUid = new HashMap<>();
         newMeasurementsForUid.put(MeasurementType.MOBILE, (float) mobileDrainMAh);
         newMeasurementsForUid.put(MeasurementType.WIFI, (float) wifiDrainMAh);
         measurements.put(uid, newMeasurementsForUid);
@@ -66,7 +66,10 @@ public class TransferDataProvider implements DataProvider {
             case WIFI:
                 return measurements.get(uid).get(measurementType);
             default:
-                return Float.NaN;
+                throw new IllegalArgumentException(
+                        "TransferDataProvider provides only MOBILE and WIFI measurements," +
+                                " not of type: " + measurementType.name()
+                );
         }
     }
 
@@ -81,18 +84,22 @@ public class TransferDataProvider implements DataProvider {
     }
 
     private class TransferInfo {
-        long wifiRxBytes;
-        long wifiTxBytes;
-        long mobileRxBytes;
-        long mobileTxBytes;
+        final long wifiRxBytes;
+        final long wifiTxBytes;
+        final long mobileRxBytes;
+        final long mobileTxBytes;
 
         TransferInfo(int uid) {
             if (wifi.isWifiEnabled()) {
                 wifiRxBytes = TrafficStats.getUidRxBytes(uid);
                 wifiTxBytes = TrafficStats.getUidTxBytes(uid);
+                mobileRxBytes = 0;
+                mobileTxBytes = 0;
             } else {
                 mobileRxBytes = TrafficStats.getUidRxBytes(uid);
                 mobileTxBytes = TrafficStats.getUidTxBytes(uid);
+                wifiRxBytes = 0;
+                wifiTxBytes = 0;
             }
         }
 
