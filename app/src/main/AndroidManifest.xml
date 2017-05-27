@@ -12,7 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".activity.ProcessInfoActivity" />
-        <activity android:name=".activity.ProcessesListActivity">
+        <activity android:name=".activity.ProcessesListActivity" />
+        <activity
+            android:name=".activity.SummaryActivity"
+            android:label="Power Estimator - summary">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

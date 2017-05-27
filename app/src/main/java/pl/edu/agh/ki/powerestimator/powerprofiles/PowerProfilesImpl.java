@@ -22,6 +22,8 @@ import pl.edu.agh.ki.powerestimator.powerprofiles.data.TransferDataProvider;
 public class PowerProfilesImpl implements PowerProfiles {
     private static final String LOG_TAG = "PPImpl";
 
+    private static PowerProfiles instance;
+
     private final ScheduledExecutorService executorService =
             Executors.newSingleThreadScheduledExecutor();
 
@@ -31,7 +33,7 @@ public class PowerProfilesImpl implements PowerProfiles {
 
     private ScheduledFuture<?> future;
 
-    public PowerProfilesImpl(Context context) throws Exception {
+    private PowerProfilesImpl(Context context) throws Exception {
         PowerProfilesObject powerProfilesObject = new PowerProfilesObject(context);
 
         providers.add(new CpuInfoProvider(powerProfilesObject));
@@ -43,6 +45,13 @@ public class PowerProfilesImpl implements PowerProfiles {
                 providerMap.put(type, provider);
             }
         }
+    }
+
+    public static PowerProfiles getInstance(Context context) throws Exception {
+        if (instance == null) {
+            instance = new PowerProfilesImpl(context);
+        }
+        return instance;
     }
 
     @Override

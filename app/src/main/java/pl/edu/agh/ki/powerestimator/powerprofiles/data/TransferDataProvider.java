@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import pl.edu.agh.ki.powerestimator.activity.SummaryActivity;
 import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 
 public class TransferDataProvider implements DataProvider {
@@ -95,9 +96,15 @@ public class TransferDataProvider implements DataProvider {
         long mobileTxBytes;
 
         TransferInfo(int uid) {
-            if (wifi.isWifiEnabled()) {
+            if (wifi.isWifiEnabled() && uid == SummaryActivity.SUMMARY_PID) {
+                wifiRxBytes = TrafficStats.getTotalRxBytes();
+                wifiTxBytes = TrafficStats.getTotalTxBytes();
+            } else if (wifi.isWifiEnabled() && uid != SummaryActivity.SUMMARY_PID) {
                 wifiRxBytes = TrafficStats.getUidRxBytes(uid);
                 wifiTxBytes = TrafficStats.getUidTxBytes(uid);
+            } else if (!wifi.isWifiEnabled() && uid == SummaryActivity.SUMMARY_PID) {
+                mobileRxBytes = TrafficStats.getMobileRxBytes();
+                mobileTxBytes = TrafficStats.getMobileTxBytes();
             } else {
                 mobileRxBytes = TrafficStats.getUidRxBytes(uid);
                 mobileTxBytes = TrafficStats.getUidTxBytes(uid);

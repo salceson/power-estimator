@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import pl.edu.agh.ki.powerestimator.activity.SummaryActivity;
 import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 
 public class CpuInfoProvider implements DataProvider {
@@ -65,21 +66,37 @@ public class CpuInfoProvider implements DataProvider {
     }
 
     private CpuInfo readCpuInfo(int pid) throws IOException {
-        RandomAccessFile reader = new RandomAccessFile("/proc/" + pid + "/stat", "r");
+        String path;
+        if (pid == SummaryActivity.SUMMARY_PID) {
+            path = "/proc/stat";
+        } else {
+            path = "/proc/" + pid + "/stat";
+        }
+        RandomAccessFile reader = new RandomAccessFile(path, "r");
         String line = reader.readLine();
         reader.close();
 
         String[] split = line.split("\\s+");
 
-        // utime stime cutime cstime
-        long activeTimeTicks = Long.parseLong(split[13]) + Long.parseLong(split[14])
-                + Long.parseLong(split[15]) + Long.parseLong(split[16]);
-        long processStartTimeTicks = Long.parseLong(split[21]);
+        long activeTimeTicks;
+        long idleTimeTicks = 0;
 
-        long systemUptimeMillis = SystemClock.uptimeMillis();
-        long processUptimeTicks = (systemUptimeMillis / MILLIS_PER_CLOCK_TICK)
-                - processStartTimeTicks;
-        long idleTimeTicks = processUptimeTicks - activeTimeTicks;
+        if (pid == SummaryActivity.SUMMARY_PID) {
+            // utime ntime stime
+            activeTimeTicks = Long.parseLong(split[1]) + Long.parseLong(split[2])
+                    + Long.parseLong(split[3]);
+            idleTimeTicks = Long.parseLong(split[4]);
+        } else {
+            // utime stime cutime cstime
+            activeTimeTicks = Long.parseLong(split[13]) + Long.parseLong(split[14])
+                    + Long.parseLong(split[15]) + Long.parseLong(split[16]);
+            long processStartTimeTicks = Long.parseLong(split[21]);
+
+            long systemUptimeMillis = SystemClock.uptimeMillis();
+            long processUptimeTicks = (systemUptimeMillis / MILLIS_PER_CLOCK_TICK)
+                    - processStartTimeTicks;
+            idleTimeTicks = processUptimeTicks - activeTimeTicks;
+        }
 
         return new CpuInfo(activeTimeTicks, idleTimeTicks);
     }

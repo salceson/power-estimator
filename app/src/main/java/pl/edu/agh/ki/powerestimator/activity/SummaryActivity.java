@@ -7,7 +7,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
+import android.view.View;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -25,13 +25,17 @@ import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfiles;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesImpl;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesListener;
 
-public class ProcessInfoActivity extends AppCompatActivity {
+public class SummaryActivity extends AppCompatActivity {
+
+    public static final int SUMMARY_PID = -1;
+
     private static final int MAX_ENTRIES = 50;
-    private static final String LOG_TAG = "PInfoActivity";
+    private static final String LOG_TAG = "SummaryActivity";
 
     private LineChart chart = null;
     private LineData lineData = null;
 
+    private LineDataSet screenDataSet = null;
     private LineDataSet cpuDataSet = null;
     private LineDataSet wifiDataSet = null;
     private LineDataSet mobileDataSet = null;
@@ -41,6 +45,7 @@ public class ProcessInfoActivity extends AppCompatActivity {
     private final List<Entry> cpuEntries = new ArrayList<>();
     private final List<Entry> wifiEntries = new ArrayList<>();
     private final List<Entry> mobileEntries = new ArrayList<>();
+    private final List<Entry> screenEntries = new ArrayList<>();
 
     private PowerProfiles powerProfiles;
 
@@ -48,16 +53,21 @@ public class ProcessInfoActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             Bundle data = msg.getData();
+            final float screenUsageMAh = data.getFloat("screen");
             final float cpuUsageMAh = data.getFloat("cpu");
             final float wifiMAh = data.getFloat("wifi");
             final float mobileMAh = data.getFloat("mobile");
 
             lastX += 1.0f;
 
+            screenDataSet.addEntry(new Entry(lastX, screenUsageMAh));
             cpuDataSet.addEntry(new Entry(lastX, cpuUsageMAh));
             wifiDataSet.addEntry(new Entry(lastX, wifiMAh));
             mobileDataSet.addEntry(new Entry(lastX, mobileMAh));
 
+            while (screenDataSet.getEntryCount() > MAX_ENTRIES) {
+                screenDataSet.removeFirst();
+            }
             while (cpuDataSet.getEntryCount() > MAX_ENTRIES) {
                 cpuDataSet.removeFirst();
             }
@@ -77,7 +87,7 @@ public class ProcessInfoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_process_info);
+        setContentView(R.layout.activity_summary);
 
         try {
             powerProfiles = PowerProfilesImpl.getInstance(getApplicationContext());
@@ -85,27 +95,17 @@ public class ProcessInfoActivity extends AppCompatActivity {
             Log.e(LOG_TAG, "Could not create PowerProfiles class", e);
         }
 
-        final Intent intent = getIntent();
-        final Bundle extra = intent.getExtras();
-
-        final int pid = extra.getInt("pid");
-        final int uid = extra.getInt("uid");
-        final String name = extra.getString("name");
-
-        final TextView view = (TextView) findViewById(R.id.processName);
-        view.setText(name);
-
         chart = (LineChart) findViewById(R.id.chart);
 
         final PowerProfilesListener listener = new PowerProfilesListener() {
             @Override
             public int getPid() {
-                return pid;
+                return SUMMARY_PID;
             }
 
             @Override
             public int getUid() {
-                return uid;
+                return SUMMARY_PID;
             }
 
             @Override
@@ -130,35 +130,25 @@ public class ProcessInfoActivity extends AppCompatActivity {
         try {
             powerProfiles.addListener(listener);
         } catch (Exception e) {
-            Log.e(ProcessInfoActivity.class.getSimpleName(), "Error while adding listner", e);
+            Log.e(ProcessInfoActivity.class.getSimpleName(), "Error while adding listener", e);
         }
 
+        screenEntries.add(new Entry(lastX, 0.0f));
         cpuEntries.add(new Entry(lastX, 0.0f));
         wifiEntries.add(new Entry(lastX, 0.0f));
         mobileEntries.add(new Entry(lastX, 0.0f));
 
+        screenDataSet = createDataSet(screenEntries, "Screen usage [mAh]", Color.rgb(255, 255, 0));
         cpuDataSet = createDataSet(cpuEntries, "CPU usage [mAh]", Color.rgb(255, 0, 0));
         wifiDataSet = createDataSet(wifiEntries, "WiFi usage [mAh]", Color.rgb(0, 255, 0));
         mobileDataSet = createDataSet(mobileEntries, "3G usage [mAh]", Color.rgb(0, 0, 255));
 
-        lineData = new LineData(cpuDataSet, wifiDataSet, mobileDataSet);
+        lineData = new LineData(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
 
         chart.setData(lineData);
         chart.getAxisRight().setDrawLabels(false);
         chart.setDescription(null);
         chart.invalidate();
-    }
-
-    private LineDataSet createDataSet(List<Entry> entries, String label, int color) {
-        final LineDataSet dataSet = new LineDataSet(entries, label);
-        dataSet.setLineWidth(2f);
-        dataSet.setValueTextColor(Color.rgb(0, 0, 0));
-        dataSet.setValueTextSize(10f);
-        dataSet.setColor(color);
-        dataSet.setDrawFilled(false);
-        dataSet.setDrawValues(false);
-        dataSet.setDrawCircles(false);
-        return dataSet;
     }
 
     @Override
@@ -171,5 +161,22 @@ public class ProcessInfoActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         powerProfiles.stopMeasurements();
+    }
+
+    public void showProcessesList(View view) {
+        final Intent intent = new Intent(SummaryActivity.this, ProcessesListActivity.class);
+        startActivity(intent);
+    }
+
+    private LineDataSet createDataSet(List<Entry> entries, String label, int color) {
+        final LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setLineWidth(2f);
+        dataSet.setValueTextColor(Color.rgb(0, 0, 0));
+        dataSet.setValueTextSize(10f);
+        dataSet.setColor(color);
+        dataSet.setDrawFilled(false);
+        dataSet.setDrawValues(false);
+        dataSet.setDrawCircles(false);
+        return dataSet;
     }
 }
