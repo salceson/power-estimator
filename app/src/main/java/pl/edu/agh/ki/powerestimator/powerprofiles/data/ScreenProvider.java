@@ -14,15 +14,14 @@ import static android.provider.Settings.System.getInt;
 public class ScreenProvider implements DataProvider {
     private static final int MAX_BRIGHTNESS = 255;
     private static final int SECONDS_PER_HOUR = 3600;
-    private static final double SCALE = 1.0;
 
-    private final PowerProfilesObject powerProfilesObject;
+    private final PowerProfileObject powerProfileObject;
     private float measurement = Float.NaN;
     private final PowerManager powerManager;
     private final Context context;
 
-    public ScreenProvider(PowerProfilesObject powerProfilesObject, Context context) {
-        this.powerProfilesObject = powerProfilesObject;
+    public ScreenProvider(PowerProfileObject powerProfileObject, Context context) {
+        this.powerProfileObject = powerProfileObject;
         this.context = context;
         this.powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     }
@@ -38,9 +37,9 @@ public class ScreenProvider implements DataProvider {
         double screenDrainMAh = 0;
         if (powerManager.isScreenOn()) {
             float brightness = getInt(context.getContentResolver(), SCREEN_BRIGHTNESS);
-            screenDrainMAh += (powerProfilesObject.getAveragePower("screen.on") +
-                    (brightness / MAX_BRIGHTNESS * powerProfilesObject
-                            .getAveragePower("screen.full"))) / SECONDS_PER_HOUR * SCALE;
+            screenDrainMAh += (powerProfileObject.getAveragePower("screen.on") +
+                    (brightness / MAX_BRIGHTNESS * powerProfileObject
+                            .getAveragePower("screen.full"))) / SECONDS_PER_HOUR;
         }
         measurement = (float) screenDrainMAh;
     }
@@ -55,10 +54,10 @@ public class ScreenProvider implements DataProvider {
     }
 
     @Override
-    public void listenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(int pid, int uid) throws Exception {
     }
 
     @Override
-    public void listenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(int pid, int uid) throws Exception {
     }
 }

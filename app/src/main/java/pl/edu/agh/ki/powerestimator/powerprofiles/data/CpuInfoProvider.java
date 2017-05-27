@@ -17,12 +17,12 @@ public class CpuInfoProvider implements DataProvider {
     private static final int MILLIS_PER_CLOCK_TICK = 1000 / CLOCK_TICKS_PER_SECOND;
     private static final int SECONDS_PER_HOUR = 3600;
 
-    private final PowerProfilesObject powerProfilesObject;
+    private final PowerProfileObject powerProfileObject;
     private Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
     private Map<Integer, Float> measurements = new ConcurrentHashMap<>();
 
-    public CpuInfoProvider(PowerProfilesObject powerProfilesObject) {
-        this.powerProfilesObject = powerProfilesObject;
+    public CpuInfoProvider(PowerProfileObject powerProfileObject) {
+        this.powerProfileObject = powerProfileObject;
     }
 
     @Override
@@ -39,9 +39,9 @@ public class CpuInfoProvider implements DataProvider {
         long cpuIdleTime = nextCpuInfo.idleTime - previousCpuInfo.idleTime;
         int ticksPerHour = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
         double cpuDrainMAh = (
-                powerProfilesObject.getAveragePower("cpu.idle") * cpuIdleTime / ticksPerHour)
-                + (powerProfilesObject.getAveragePower("cpu.active") * cpuActiveTime / ticksPerHour)
-                + (powerProfilesObject.getAveragePower("cpu.idle") * cpuActiveTime / ticksPerHour);
+                powerProfileObject.getAveragePower("cpu.idle") * cpuIdleTime / ticksPerHour)
+                + (powerProfileObject.getAveragePower("cpu.active") * cpuActiveTime / ticksPerHour)
+                + (powerProfileObject.getAveragePower("cpu.idle") * cpuActiveTime / ticksPerHour);
         measurements.put(pid, (float) cpuDrainMAh);
     }
 
@@ -55,12 +55,12 @@ public class CpuInfoProvider implements DataProvider {
     }
 
     @Override
-    public void listenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(int pid, int uid) throws Exception {
         previousCpuInfos.put(pid, readCpuInfo(pid));
     }
 
     @Override
-    public void listenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(int pid, int uid) throws Exception {
         previousCpuInfos.remove(pid);
     }
 

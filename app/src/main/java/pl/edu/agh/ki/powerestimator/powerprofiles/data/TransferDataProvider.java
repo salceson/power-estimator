@@ -14,18 +14,15 @@ import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 
 public class TransferDataProvider implements DataProvider {
     private static final int SECONDS_PER_HOUR = 3600;
-    private static final double SCALE = 1.0;
 
-    private final PowerProfilesObject powerProfilesObject;
-    private final Context context;
+    private final PowerProfileObject powerProfileObject;
     private final Map<Integer, TransferInfo> previousTransferInfos = new ConcurrentHashMap<>();
     private final Map<Integer, Map<MeasurementType, Float>> measurements =
             new ConcurrentHashMap<>();
     private final WifiManager wifi;
 
-    public TransferDataProvider(PowerProfilesObject powerProfilesObject, Context context) {
-        this.powerProfilesObject = powerProfilesObject;
-        this.context = context;
+    public TransferDataProvider(PowerProfileObject powerProfileObject, Context context) {
+        this.powerProfileObject = powerProfileObject;
         this.wifi = (WifiManager) context.getApplicationContext()
                 .getSystemService(Context.WIFI_SERVICE);
     }
@@ -44,20 +41,15 @@ public class TransferDataProvider implements DataProvider {
         double mobileDrainMAh = 0;
         double wifiDrainMAh = 0;
 
-        if (previousTransferInfo.wasWifiReceiving(nextTransferInfo)) {
-            wifiDrainMAh +=
-                    powerProfilesObject.getAveragePower("wifi.active") / SECONDS_PER_HOUR * SCALE;
-        }
-
-        if (previousTransferInfo.wasWifiTransmitting(nextTransferInfo)) {
-            wifiDrainMAh +=
-                    powerProfilesObject.getAveragePower("wifi.active") / SECONDS_PER_HOUR * SCALE;
+        if (previousTransferInfo.wasWifiReceiving(nextTransferInfo) ||
+                previousTransferInfo.wasWifiTransmitting(nextTransferInfo)) {
+            wifiDrainMAh += powerProfileObject.getAveragePower("wifi.active") / SECONDS_PER_HOUR;
         }
 
         if (previousTransferInfo.wasMobileReceiving(nextTransferInfo)
                 || previousTransferInfo.wasMobileTransmitting(nextTransferInfo)) {
             mobileDrainMAh +=
-                    powerProfilesObject.getAveragePower("radio.active") / SECONDS_PER_HOUR * SCALE;
+                    powerProfileObject.getAveragePower("radio.active") / SECONDS_PER_HOUR;
         }
 
         Map<MeasurementType, Float> newMeasurementsForUid = new HashMap<>();
@@ -79,12 +71,12 @@ public class TransferDataProvider implements DataProvider {
     }
 
     @Override
-    public void listenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(int pid, int uid) throws Exception {
         previousTransferInfos.put(uid, new TransferInfo(uid));
     }
 
     @Override
-    public void listenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(int pid, int uid) throws Exception {
         previousTransferInfos.remove(uid);
     }
 
