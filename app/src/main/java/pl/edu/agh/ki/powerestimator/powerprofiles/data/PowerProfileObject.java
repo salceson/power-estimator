@@ -16,7 +16,7 @@ public class PowerProfileObject {
 
     double getAveragePower(String componentState) throws Exception {
         return (double) powerProfileClass
-                .getMethod("getAveragePower")
+                .getMethod("getAveragePower", String.class)
                 .invoke(powerProfilesInstance, componentState);
     }
 }
