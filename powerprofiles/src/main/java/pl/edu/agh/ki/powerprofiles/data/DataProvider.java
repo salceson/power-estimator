@@ -1,8 +1,8 @@
-package pl.edu.agh.ki.powerestimator.powerprofiles.data;
+package pl.edu.agh.ki.powerprofiles.data;
 
 import java.util.List;
 
-import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.MeasurementType;
 
 public interface DataProvider {
     List<MeasurementType> getProvidedMeasurementTypes();

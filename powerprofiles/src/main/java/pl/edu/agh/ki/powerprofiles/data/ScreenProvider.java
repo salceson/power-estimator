@@ -1,4 +1,4 @@
-package pl.edu.agh.ki.powerestimator.powerprofiles.data;
+package pl.edu.agh.ki.powerprofiles.data;
 
 import android.content.Context;
 import android.os.PowerManager;
@@ -6,7 +6,7 @@ import android.os.PowerManager;
 import java.util.Collections;
 import java.util.List;
 
-import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.MeasurementType;
 
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
 import static android.provider.Settings.System.getInt;

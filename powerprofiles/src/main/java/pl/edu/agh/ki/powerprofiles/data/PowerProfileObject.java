@@ -1,4 +1,4 @@
-package pl.edu.agh.ki.powerestimator.powerprofiles.data;
+package pl.edu.agh.ki.powerprofiles.data;
 
 import android.content.Context;
 
