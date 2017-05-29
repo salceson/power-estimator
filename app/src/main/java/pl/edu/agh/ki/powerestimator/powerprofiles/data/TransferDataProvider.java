@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import pl.edu.agh.ki.powerestimator.activity.SummaryActivity;
 import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 
 public class TransferDataProvider implements DataProvider {
@@ -21,6 +20,7 @@ public class TransferDataProvider implements DataProvider {
     private final Map<Integer, Map<MeasurementType, Float>> measurements =
             new ConcurrentHashMap<>();
     private final WifiManager wifi;
+    private boolean summary;
 
     public TransferDataProvider(PowerProfileObject powerProfileObject, Context context) {
         this.powerProfileObject = powerProfileObject;
@@ -74,7 +74,8 @@ public class TransferDataProvider implements DataProvider {
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(int pid, int uid, boolean summary) throws Exception {
+        this.summary = summary;
         previousTransferInfos.put(uid, new TransferInfo(uid));
     }
 
@@ -93,7 +94,7 @@ public class TransferDataProvider implements DataProvider {
             if (wifi.isWifiEnabled()) {
                 mobileRxBytes = 0;
                 mobileTxBytes = 0;
-                if (uid == SummaryActivity.SUMMARY_PID) {
+                if (summary) {
                     wifiRxBytes = TrafficStats.getTotalRxBytes();
                     wifiTxBytes = TrafficStats.getTotalTxBytes();
                 } else {
@@ -103,7 +104,7 @@ public class TransferDataProvider implements DataProvider {
             } else {
                 wifiRxBytes = 0;
                 wifiTxBytes = 0;
-                if (uid == SummaryActivity.SUMMARY_PID) {
+                if (summary) {
                     mobileRxBytes = TrafficStats.getMobileRxBytes();
                     mobileTxBytes = TrafficStats.getMobileTxBytes();
                 } else {

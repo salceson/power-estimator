@@ -106,7 +106,7 @@ public class PowerProfilesImpl implements PowerProfiles {
     public void addListener(PowerProfilesListener listener) throws Exception {
         listeners.add(listener);
         for (DataProvider provider : providers) {
-            provider.onListenerAdded(listener.getPid(), listener.getUid());
+            provider.onListenerAdded(listener.getPid(), listener.getUid(), listener.isSummary());
         }
     }
 

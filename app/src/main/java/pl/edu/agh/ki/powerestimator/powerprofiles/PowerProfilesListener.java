@@ -8,6 +8,8 @@ public interface PowerProfilesListener {
 
     int getUid();
 
+    boolean isSummary();
+
     List<MeasurementType> getMeasurementTypes();
 
     void onNewData(Map<MeasurementType, Float> data);

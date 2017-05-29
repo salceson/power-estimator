@@ -24,13 +24,12 @@ import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfiles;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesImpl;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesListener;
+import pl.edu.agh.ki.powerestimator.utils.ChartUtils;
 
 public class SummaryActivity extends AppCompatActivity {
 
-    public static final int SUMMARY_PID = -1;
-
-    private static final int MAX_ENTRIES = 50;
     private static final String LOG_TAG = "SummaryActivity";
+    private static final int NON_EXISTENT_PID = -1;
 
     private LineChart chart = null;
     private LineData lineData = null;
@@ -65,18 +64,7 @@ public class SummaryActivity extends AppCompatActivity {
             wifiDataSet.addEntry(new Entry(lastX, wifiMAh));
             mobileDataSet.addEntry(new Entry(lastX, mobileMAh));
 
-            while (screenDataSet.getEntryCount() > MAX_ENTRIES) {
-                screenDataSet.removeFirst();
-            }
-            while (cpuDataSet.getEntryCount() > MAX_ENTRIES) {
-                cpuDataSet.removeFirst();
-            }
-            while (wifiDataSet.getEntryCount() > MAX_ENTRIES) {
-                wifiDataSet.removeFirst();
-            }
-            while (mobileDataSet.getEntryCount() > MAX_ENTRIES) {
-                mobileDataSet.removeFirst();
-            }
+            ChartUtils.removeOutdatedEntries(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
 
             lineData.notifyDataChanged();
             chart.notifyDataSetChanged();
@@ -100,12 +88,17 @@ public class SummaryActivity extends AppCompatActivity {
         final PowerProfilesListener listener = new PowerProfilesListener() {
             @Override
             public int getPid() {
-                return SUMMARY_PID;
+                return NON_EXISTENT_PID;
             }
 
             @Override
             public int getUid() {
-                return SUMMARY_PID;
+                return NON_EXISTENT_PID;
+            }
+
+            @Override
+            public boolean isSummary() {
+                return true;
             }
 
             @Override
@@ -138,10 +131,14 @@ public class SummaryActivity extends AppCompatActivity {
         wifiEntries.add(new Entry(lastX, 0.0f));
         mobileEntries.add(new Entry(lastX, 0.0f));
 
-        screenDataSet = createDataSet(screenEntries, "Screen usage [mAh]", Color.rgb(255, 255, 0));
-        cpuDataSet = createDataSet(cpuEntries, "CPU usage [mAh]", Color.rgb(255, 0, 0));
-        wifiDataSet = createDataSet(wifiEntries, "WiFi usage [mAh]", Color.rgb(0, 255, 0));
-        mobileDataSet = createDataSet(mobileEntries, "3G usage [mAh]", Color.rgb(0, 0, 255));
+        screenDataSet = ChartUtils.createStandardLineDataSet(screenEntries, "Screen usage [mAh]",
+                Color.rgb(255, 255, 0));
+        cpuDataSet = ChartUtils.createStandardLineDataSet(cpuEntries, "CPU usage [mAh]",
+                Color.rgb(255, 0, 0));
+        wifiDataSet = ChartUtils.createStandardLineDataSet(wifiEntries, "WiFi usage [mAh]",
+                Color.rgb(0, 255, 0));
+        mobileDataSet = ChartUtils.createStandardLineDataSet(mobileEntries, "3G usage [mAh]",
+                Color.rgb(0, 0, 255));
 
         lineData = new LineData(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
 
@@ -166,17 +163,5 @@ public class SummaryActivity extends AppCompatActivity {
     public void showProcessesList(View view) {
         final Intent intent = new Intent(SummaryActivity.this, ProcessesListActivity.class);
         startActivity(intent);
-    }
-
-    private LineDataSet createDataSet(List<Entry> entries, String label, int color) {
-        final LineDataSet dataSet = new LineDataSet(entries, label);
-        dataSet.setLineWidth(2f);
-        dataSet.setValueTextColor(Color.rgb(0, 0, 0));
-        dataSet.setValueTextSize(10f);
-        dataSet.setColor(color);
-        dataSet.setDrawFilled(false);
-        dataSet.setDrawValues(false);
-        dataSet.setDrawCircles(false);
-        return dataSet;
     }
 }

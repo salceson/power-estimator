@@ -24,6 +24,7 @@ import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfiles;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesImpl;
 import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesListener;
+import pl.edu.agh.ki.powerestimator.utils.ChartUtils;
 
 public class ProcessInfoActivity extends AppCompatActivity {
     private static final int MAX_ENTRIES = 50;
@@ -58,15 +59,7 @@ public class ProcessInfoActivity extends AppCompatActivity {
             wifiDataSet.addEntry(new Entry(lastX, wifiMAh));
             mobileDataSet.addEntry(new Entry(lastX, mobileMAh));
 
-            while (cpuDataSet.getEntryCount() > MAX_ENTRIES) {
-                cpuDataSet.removeFirst();
-            }
-            while (wifiDataSet.getEntryCount() > MAX_ENTRIES) {
-                wifiDataSet.removeFirst();
-            }
-            while (mobileDataSet.getEntryCount() > MAX_ENTRIES) {
-                mobileDataSet.removeFirst();
-            }
+            ChartUtils.removeOutdatedEntries(cpuDataSet, wifiDataSet, mobileDataSet);
 
             lineData.notifyDataChanged();
             chart.notifyDataSetChanged();
@@ -109,6 +102,11 @@ public class ProcessInfoActivity extends AppCompatActivity {
             }
 
             @Override
+            public boolean isSummary() {
+                return false;
+            }
+
+            @Override
             public List<MeasurementType> getMeasurementTypes() {
                 return Arrays.asList(MeasurementType.CPU, MeasurementType.MOBILE,
                         MeasurementType.WIFI, MeasurementType.SCREEN);
@@ -130,16 +128,16 @@ public class ProcessInfoActivity extends AppCompatActivity {
         try {
             powerProfiles.addListener(listener);
         } catch (Exception e) {
-            Log.e(ProcessInfoActivity.class.getSimpleName(), "Error while adding listner", e);
+            Log.e(ProcessInfoActivity.class.getSimpleName(), "Error while adding listener", e);
         }
 
         cpuEntries.add(new Entry(lastX, 0.0f));
         wifiEntries.add(new Entry(lastX, 0.0f));
         mobileEntries.add(new Entry(lastX, 0.0f));
 
-        cpuDataSet = createDataSet(cpuEntries, "CPU usage [mAh]", Color.rgb(255, 0, 0));
-        wifiDataSet = createDataSet(wifiEntries, "WiFi usage [mAh]", Color.rgb(0, 255, 0));
-        mobileDataSet = createDataSet(mobileEntries, "3G usage [mAh]", Color.rgb(0, 0, 255));
+        cpuDataSet = ChartUtils.createStandardLineDataSet(cpuEntries, "CPU usage [mAh]", Color.rgb(255, 0, 0));
+        wifiDataSet = ChartUtils.createStandardLineDataSet(wifiEntries, "WiFi usage [mAh]", Color.rgb(0, 255, 0));
+        mobileDataSet = ChartUtils.createStandardLineDataSet(mobileEntries, "3G usage [mAh]", Color.rgb(0, 0, 255));
 
         lineData = new LineData(cpuDataSet, wifiDataSet, mobileDataSet);
 
@@ -147,18 +145,6 @@ public class ProcessInfoActivity extends AppCompatActivity {
         chart.getAxisRight().setDrawLabels(false);
         chart.setDescription(null);
         chart.invalidate();
-    }
-
-    private LineDataSet createDataSet(List<Entry> entries, String label, int color) {
-        final LineDataSet dataSet = new LineDataSet(entries, label);
-        dataSet.setLineWidth(2f);
-        dataSet.setValueTextColor(Color.rgb(0, 0, 0));
-        dataSet.setValueTextSize(10f);
-        dataSet.setColor(color);
-        dataSet.setDrawFilled(false);
-        dataSet.setDrawValues(false);
-        dataSet.setDrawCircles(false);
-        return dataSet;
     }
 
     @Override
