@@ -1,4 +1,4 @@
-package pl.edu.agh.ki.powerestimator.powerprofiles.data;
+package pl.edu.agh.ki.powerprofiles.data;
 
 import android.content.Context;
 import android.net.TrafficStats;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.MeasurementType;
 
 public class TransferDataProvider implements DataProvider {
     private static final int SECONDS_PER_HOUR = 3600;

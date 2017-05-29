@@ -1,4 +1,4 @@
-package pl.edu.agh.ki.powerestimator.powerprofiles;
+package pl.edu.agh.ki.powerprofiles;
 
 import java.util.List;
 import java.util.Map;
