@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import pl.edu.agh.ki.powerestimator.powerprofiles.data.CpuInfoProvider;
 import pl.edu.agh.ki.powerestimator.powerprofiles.data.DataProvider;
-import pl.edu.agh.ki.powerestimator.powerprofiles.data.PowerProfilesObject;
+import pl.edu.agh.ki.powerestimator.powerprofiles.data.PowerProfileObject;
 import pl.edu.agh.ki.powerestimator.powerprofiles.data.ScreenProvider;
 import pl.edu.agh.ki.powerestimator.powerprofiles.data.TransferDataProvider;
 
@@ -34,11 +34,11 @@ public class PowerProfilesImpl implements PowerProfiles {
     private ScheduledFuture<?> future;
 
     private PowerProfilesImpl(Context context) throws Exception {
-        PowerProfilesObject powerProfilesObject = new PowerProfilesObject(context);
+        PowerProfileObject powerProfileObject = new PowerProfileObject(context);
 
-        providers.add(new CpuInfoProvider(powerProfilesObject));
-        providers.add(new TransferDataProvider(powerProfilesObject, context));
-        providers.add(new ScreenProvider(powerProfilesObject, context));
+        providers.add(new CpuInfoProvider(powerProfileObject));
+        providers.add(new TransferDataProvider(powerProfileObject, context));
+        providers.add(new ScreenProvider(powerProfileObject, context));
 
         for (DataProvider provider : providers) {
             for (MeasurementType type : provider.getProvidedMeasurementTypes()) {
@@ -63,11 +63,13 @@ public class PowerProfilesImpl implements PowerProfiles {
                     for (PowerProfilesListener listener : listeners) {
                         int pid = listener.getPid();
                         int uid = listener.getUid();
-                        Map<MeasurementType, Float> measurements = new HashMap<>();
-                        List<DataProvider> providersWithMeasurementsTaken = new ArrayList<>();
+
+                        final Map<MeasurementType, Float> measurements = new HashMap<>();
+                        final List<DataProvider> providersWithMeasurementsTaken = new ArrayList<>();
+
                         for (MeasurementType type : listener.getMeasurementTypes()) {
                             try {
-                                DataProvider provider = providerMap.get(type);
+                                final DataProvider provider = providerMap.get(type);
                                 if (!providersWithMeasurementsTaken.contains(provider)) {
                                     provider.takeMeasurements(pid, uid);
                                     providersWithMeasurementsTaken.add(provider);
@@ -76,8 +78,7 @@ public class PowerProfilesImpl implements PowerProfiles {
                                 Log.e(LOG_TAG, "Error while taking measurements of type "
                                         + type.name(), e);
                             }
-                        }
-                        for (MeasurementType type : listener.getMeasurementTypes()) {
+
                             float measurement = Float.NaN;
                             try {
                                 measurement = providerMap.get(type).getMeasurement(type, pid, uid);
@@ -105,7 +106,7 @@ public class PowerProfilesImpl implements PowerProfiles {
     public void addListener(PowerProfilesListener listener) throws Exception {
         listeners.add(listener);
         for (DataProvider provider : providers) {
-            provider.listenerAdded(listener.getPid(), listener.getUid());
+            provider.onListenerAdded(listener.getPid(), listener.getUid());
         }
     }
 
@@ -113,7 +114,7 @@ public class PowerProfilesImpl implements PowerProfiles {
     public void removeListener(PowerProfilesListener listener) throws Exception {
         listeners.remove(listener);
         for (DataProvider provider : providers) {
-            provider.listenerRemoved(listener.getPid(), listener.getUid());
+            provider.onListenerRemoved(listener.getPid(), listener.getUid());
         }
     }
 }

@@ -15,18 +15,15 @@ import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
 
 public class TransferDataProvider implements DataProvider {
     private static final int SECONDS_PER_HOUR = 3600;
-    private static final double SCALE = 1.0;
 
-    private final PowerProfilesObject powerProfilesObject;
-    private final Context context;
+    private final PowerProfileObject powerProfileObject;
     private final Map<Integer, TransferInfo> previousTransferInfos = new ConcurrentHashMap<>();
     private final Map<Integer, Map<MeasurementType, Float>> measurements =
             new ConcurrentHashMap<>();
     private final WifiManager wifi;
 
-    public TransferDataProvider(PowerProfilesObject powerProfilesObject, Context context) {
-        this.powerProfilesObject = powerProfilesObject;
-        this.context = context;
+    public TransferDataProvider(PowerProfileObject powerProfileObject, Context context) {
+        this.powerProfileObject = powerProfileObject;
         this.wifi = (WifiManager) context.getApplicationContext()
                 .getSystemService(Context.WIFI_SERVICE);
     }
@@ -45,23 +42,17 @@ public class TransferDataProvider implements DataProvider {
         double mobileDrainMAh = 0;
         double wifiDrainMAh = 0;
 
-        if (previousTransferInfo.wasWifiReceiving(nextTransferInfo)) {
-            wifiDrainMAh +=
-                    powerProfilesObject.getAveragePower("wifi.active") / SECONDS_PER_HOUR * SCALE;
-        }
-
-        if (previousTransferInfo.wasWifiTransmitting(nextTransferInfo)) {
-            wifiDrainMAh +=
-                    powerProfilesObject.getAveragePower("wifi.active") / SECONDS_PER_HOUR * SCALE;
+        if (previousTransferInfo.wasWifiReceiving(nextTransferInfo) ||
+                previousTransferInfo.wasWifiTransmitting(nextTransferInfo)) {
+            wifiDrainMAh += powerProfileObject.getAveragePower("wifi.active") / SECONDS_PER_HOUR;
         }
 
         if (previousTransferInfo.wasMobileReceiving(nextTransferInfo)
                 || previousTransferInfo.wasMobileTransmitting(nextTransferInfo)) {
-            mobileDrainMAh +=
-                    powerProfilesObject.getAveragePower("radio.active") / SECONDS_PER_HOUR * SCALE;
+            mobileDrainMAh += powerProfileObject.getAveragePower("radio.active") / SECONDS_PER_HOUR;
         }
 
-        Map<MeasurementType, Float> newMeasurementsForUid = new HashMap<>();
+        final Map<MeasurementType, Float> newMeasurementsForUid = new HashMap<>();
         newMeasurementsForUid.put(MeasurementType.MOBILE, (float) mobileDrainMAh);
         newMeasurementsForUid.put(MeasurementType.WIFI, (float) wifiDrainMAh);
         measurements.put(uid, newMeasurementsForUid);
@@ -75,39 +66,50 @@ public class TransferDataProvider implements DataProvider {
             case WIFI:
                 return measurements.get(uid).get(measurementType);
             default:
-                return Float.NaN;
+                throw new IllegalArgumentException(
+                        "TransferDataProvider provides only MOBILE and WIFI measurements," +
+                                " not of type: " + measurementType.name()
+                );
         }
     }
 
     @Override
-    public void listenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(int pid, int uid) throws Exception {
         previousTransferInfos.put(uid, new TransferInfo(uid));
     }
 
     @Override
-    public void listenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(int pid, int uid) throws Exception {
         previousTransferInfos.remove(uid);
     }
 
     private class TransferInfo {
-        long wifiRxBytes;
-        long wifiTxBytes;
-        long mobileRxBytes;
-        long mobileTxBytes;
+        final long wifiRxBytes;
+        final long wifiTxBytes;
+        final long mobileRxBytes;
+        final long mobileTxBytes;
 
         TransferInfo(int uid) {
-            if (wifi.isWifiEnabled() && uid == SummaryActivity.SUMMARY_PID) {
-                wifiRxBytes = TrafficStats.getTotalRxBytes();
-                wifiTxBytes = TrafficStats.getTotalTxBytes();
-            } else if (wifi.isWifiEnabled() && uid != SummaryActivity.SUMMARY_PID) {
-                wifiRxBytes = TrafficStats.getUidRxBytes(uid);
-                wifiTxBytes = TrafficStats.getUidTxBytes(uid);
-            } else if (!wifi.isWifiEnabled() && uid == SummaryActivity.SUMMARY_PID) {
-                mobileRxBytes = TrafficStats.getMobileRxBytes();
-                mobileTxBytes = TrafficStats.getMobileTxBytes();
+            if (wifi.isWifiEnabled()) {
+                mobileRxBytes = 0;
+                mobileTxBytes = 0;
+                if (uid == SummaryActivity.SUMMARY_PID) {
+                    wifiRxBytes = TrafficStats.getTotalRxBytes();
+                    wifiTxBytes = TrafficStats.getTotalTxBytes();
+                } else {
+                    wifiRxBytes = TrafficStats.getUidRxBytes(uid);
+                    wifiTxBytes = TrafficStats.getUidTxBytes(uid);
+                }
             } else {
-                mobileRxBytes = TrafficStats.getUidRxBytes(uid);
-                mobileTxBytes = TrafficStats.getUidTxBytes(uid);
+                wifiRxBytes = 0;
+                wifiTxBytes = 0;
+                if (uid == SummaryActivity.SUMMARY_PID) {
+                    mobileRxBytes = TrafficStats.getMobileRxBytes();
+                    mobileTxBytes = TrafficStats.getMobileTxBytes();
+                } else {
+                    mobileRxBytes = TrafficStats.getUidRxBytes(uid);
+                    mobileTxBytes = TrafficStats.getUidTxBytes(uid);
+                }
             }
         }
 

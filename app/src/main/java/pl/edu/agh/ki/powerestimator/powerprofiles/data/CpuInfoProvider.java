@@ -1,5 +1,6 @@
 package pl.edu.agh.ki.powerestimator.powerprofiles.data;
 
+import android.annotation.SuppressLint;
 import android.os.SystemClock;
 
 import java.io.IOException;
@@ -17,13 +18,16 @@ public class CpuInfoProvider implements DataProvider {
     private static final int CLOCK_TICKS_PER_SECOND = 100;
     private static final int MILLIS_PER_CLOCK_TICK = 1000 / CLOCK_TICKS_PER_SECOND;
     private static final int SECONDS_PER_HOUR = 3600;
+    private static final int TICKS_PER_HOUR = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
+    private static final String PROC_PID_INFO_FILE_TEMPLATE = "/proc/%d/stat";
+    private static final String PROC_INFO_FILE_NAME = "/proc/stat";
 
-    private final PowerProfilesObject powerProfilesObject;
-    private Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
-    private Map<Integer, Float> measurements = new ConcurrentHashMap<>();
+    private final PowerProfileObject powerProfileObject;
+    private final Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
+    private final Map<Integer, Float> measurements = new ConcurrentHashMap<>();
 
-    public CpuInfoProvider(PowerProfilesObject powerProfilesObject) {
-        this.powerProfilesObject = powerProfilesObject;
+    public CpuInfoProvider(PowerProfileObject powerProfileObject) {
+        this.powerProfileObject = powerProfileObject;
     }
 
     @Override
@@ -38,11 +42,10 @@ public class CpuInfoProvider implements DataProvider {
         previousCpuInfos.put(pid, nextCpuInfo);
         long cpuActiveTime = nextCpuInfo.activeTime - previousCpuInfo.activeTime;
         long cpuIdleTime = nextCpuInfo.idleTime - previousCpuInfo.idleTime;
-        int ticksPerHour = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
         double cpuDrainMAh = (
-                powerProfilesObject.getAveragePower("cpu.idle") * cpuIdleTime / ticksPerHour)
-                + (powerProfilesObject.getAveragePower("cpu.active") * cpuActiveTime / ticksPerHour)
-                + (powerProfilesObject.getAveragePower("cpu.idle") * cpuActiveTime / ticksPerHour);
+                powerProfileObject.getAveragePower("cpu.idle") * cpuIdleTime / TICKS_PER_HOUR)
+                + (powerProfileObject.getAveragePower("cpu.active") * cpuActiveTime / TICKS_PER_HOUR)
+                + (powerProfileObject.getAveragePower("cpu.idle") * cpuActiveTime / TICKS_PER_HOUR);
         measurements.put(pid, (float) cpuDrainMAh);
     }
 
@@ -50,27 +53,31 @@ public class CpuInfoProvider implements DataProvider {
     public float getMeasurement(MeasurementType measurementType,
                                 int pid, int uid) throws Exception {
         if (measurementType != MeasurementType.CPU) {
-            return Float.NaN;
+            throw new IllegalArgumentException(
+                    "CpuInfoProvider provides only CPU measurements, not of type: "
+                            + measurementType.name()
+            );
         }
         return measurements.get(pid);
     }
 
     @Override
-    public void listenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(int pid, int uid) throws Exception {
         previousCpuInfos.put(pid, readCpuInfo(pid));
     }
 
     @Override
-    public void listenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(int pid, int uid) throws Exception {
         previousCpuInfos.remove(pid);
     }
 
+    @SuppressLint("DefaultLocale")
     private CpuInfo readCpuInfo(int pid) throws IOException {
         String path;
         if (pid == SummaryActivity.SUMMARY_PID) {
-            path = "/proc/stat";
+            path = PROC_INFO_FILE_NAME;
         } else {
-            path = "/proc/" + pid + "/stat";
+            path = String.format(PROC_PID_INFO_FILE_TEMPLATE, pid);
         }
         RandomAccessFile reader = new RandomAccessFile(path, "r");
         String line = reader.readLine();
@@ -79,7 +86,7 @@ public class CpuInfoProvider implements DataProvider {
         String[] split = line.split("\\s+");
 
         long activeTimeTicks;
-        long idleTimeTicks = 0;
+        long idleTimeTicks;
 
         if (pid == SummaryActivity.SUMMARY_PID) {
             // utime ntime stime
@@ -102,8 +109,8 @@ public class CpuInfoProvider implements DataProvider {
     }
 
     private static class CpuInfo {
-        long activeTime;
-        long idleTime;
+        final long activeTime;
+        final long idleTime;
 
         CpuInfo(long activeTime, long idleTime) {
             this.activeTime = activeTime;
