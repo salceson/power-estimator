@@ -1,4 +1,4 @@
-package pl.edu.agh.ki.powerestimator.powerprofiles;
+package pl.edu.agh.ki.powerprofiles;
 
 import android.content.Context;
 import android.util.Log;
@@ -13,11 +13,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import pl.edu.agh.ki.powerestimator.powerprofiles.data.CpuInfoProvider;
-import pl.edu.agh.ki.powerestimator.powerprofiles.data.DataProvider;
-import pl.edu.agh.ki.powerestimator.powerprofiles.data.PowerProfileObject;
-import pl.edu.agh.ki.powerestimator.powerprofiles.data.ScreenProvider;
-import pl.edu.agh.ki.powerestimator.powerprofiles.data.TransferDataProvider;
+import pl.edu.agh.ki.powerprofiles.data.CpuInfoProvider;
+import pl.edu.agh.ki.powerprofiles.data.DataProvider;
+import pl.edu.agh.ki.powerprofiles.data.PowerProfileObject;
+import pl.edu.agh.ki.powerprofiles.data.ScreenProvider;
+import pl.edu.agh.ki.powerprofiles.data.TransferDataProvider;
 
 public class PowerProfilesImpl implements PowerProfiles {
     private static final String LOG_TAG = "PPImpl";

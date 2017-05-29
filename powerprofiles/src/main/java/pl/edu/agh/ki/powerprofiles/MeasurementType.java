@@ -1,4 +1,4 @@
-package pl.edu.agh.ki.powerestimator.powerprofiles;
+package pl.edu.agh.ki.powerprofiles;
 
 public enum MeasurementType {
     CPU,

@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 import pl.edu.agh.ki.powerestimator.R;
-import pl.edu.agh.ki.powerestimator.powerprofiles.MeasurementType;
-import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfiles;
-import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesImpl;
-import pl.edu.agh.ki.powerestimator.powerprofiles.PowerProfilesListener;
+import pl.edu.agh.ki.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.PowerProfiles;
+import pl.edu.agh.ki.powerprofiles.PowerProfilesImpl;
+import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class ProcessInfoActivity extends AppCompatActivity {
     private static final int MAX_ENTRIES = 50;
