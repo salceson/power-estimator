@@ -15,11 +15,10 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import pl.edu.agh.ki.powerestimator.R;
+import pl.edu.agh.ki.powerestimator.listeners.ProcessPowerProfilesListener;
 import pl.edu.agh.ki.powerestimator.utils.ChartUtils;
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
 import pl.edu.agh.ki.powerprofiles.PowerProfiles;
@@ -48,9 +47,9 @@ public class ProcessInfoActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             Bundle data = msg.getData();
-            final float cpuUsageMAh = data.getFloat("cpu");
-            final float wifiMAh = data.getFloat("wifi");
-            final float mobileMAh = data.getFloat("mobile");
+            final float cpuUsageMAh = data.getFloat(MeasurementType.CPU.getKey());
+            final float wifiMAh = data.getFloat(MeasurementType.WIFI.getKey());
+            final float mobileMAh = data.getFloat(MeasurementType.MOBILE.getKey());
 
             lastX += 1.0f;
 
@@ -89,40 +88,7 @@ public class ProcessInfoActivity extends AppCompatActivity {
 
         chart = (LineChart) findViewById(R.id.chart);
 
-        final PowerProfilesListener listener = new PowerProfilesListener() {
-            @Override
-            public int getPid() {
-                return pid;
-            }
-
-            @Override
-            public int getUid() {
-                return uid;
-            }
-
-            @Override
-            public boolean isSummary() {
-                return false;
-            }
-
-            @Override
-            public List<MeasurementType> getMeasurementTypes() {
-                return Arrays.asList(MeasurementType.CPU, MeasurementType.MOBILE,
-                        MeasurementType.WIFI, MeasurementType.SCREEN);
-            }
-
-            @Override
-            public void onNewData(Map<MeasurementType, Float> data) {
-                final Message message = new Message();
-                final Bundle messageData = new Bundle();
-                messageData.putFloat("screen", data.get(MeasurementType.SCREEN));
-                messageData.putFloat("cpu", data.get(MeasurementType.CPU));
-                messageData.putFloat("wifi", data.get(MeasurementType.WIFI));
-                messageData.putFloat("mobile", data.get(MeasurementType.MOBILE));
-                message.setData(messageData);
-                handler.sendMessage(message);
-            }
-        };
+        final PowerProfilesListener listener = new ProcessPowerProfilesListener(pid, uid, handler);
 
         try {
             powerProfiles.addListener(listener);

@@ -88,7 +88,7 @@ public class PowerProfilesImpl implements PowerProfiles {
                             }
                             measurements.put(type, measurement);
                         }
-                        listener.onNewData(measurements);
+                        listener.onMeasurementData(measurements);
                     }
                 }
             }, 1000, 1000, TimeUnit.MILLISECONDS);
@@ -106,7 +106,7 @@ public class PowerProfilesImpl implements PowerProfiles {
     public void addListener(PowerProfilesListener listener) throws Exception {
         listeners.add(listener);
         for (DataProvider provider : providers) {
-            provider.onListenerAdded(listener.getPid(), listener.getUid(), listener.isSummary());
+            provider.onListenerAdded(listener.getPid(), listener.getUid());
         }
     }
 

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class CpuInfoProvider implements DataProvider {
     // _SC_CLK_TCK
@@ -24,7 +25,6 @@ public class CpuInfoProvider implements DataProvider {
     private final PowerProfileObject powerProfileObject;
     private final Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
     private final Map<Integer, Float> measurements = new ConcurrentHashMap<>();
-    private boolean summary;
 
     public CpuInfoProvider(PowerProfileObject powerProfileObject) {
         this.powerProfileObject = powerProfileObject;
@@ -62,8 +62,7 @@ public class CpuInfoProvider implements DataProvider {
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid, boolean summary) throws Exception {
-        this.summary = summary;
+    public void onListenerAdded(int pid, int uid) throws Exception {
         previousCpuInfos.put(pid, readCpuInfo(pid));
     }
 
@@ -75,7 +74,7 @@ public class CpuInfoProvider implements DataProvider {
     @SuppressLint("DefaultLocale")
     private CpuInfo readCpuInfo(int pid) throws IOException {
         String path;
-        if (summary) {
+        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
             path = PROC_INFO_FILE_NAME;
         } else {
             path = String.format(PROC_PID_INFO_FILE_TEMPLATE, pid);
@@ -89,7 +88,7 @@ public class CpuInfoProvider implements DataProvider {
         long activeTimeTicks;
         long idleTimeTicks;
 
-        if (summary) {
+        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
             // utime ntime stime
             activeTimeTicks = Long.parseLong(split[1]) + Long.parseLong(split[2])
                     + Long.parseLong(split[3]);

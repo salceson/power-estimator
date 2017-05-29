@@ -15,11 +15,10 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import pl.edu.agh.ki.powerestimator.R;
+import pl.edu.agh.ki.powerestimator.listeners.SummaryPowerProfilesListener;
 import pl.edu.agh.ki.powerestimator.utils.ChartUtils;
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
 import pl.edu.agh.ki.powerprofiles.PowerProfiles;
@@ -29,7 +28,6 @@ import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 public class SummaryActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "SummaryActivity";
-    private static final int NON_EXISTENT_PID = -1;
 
     private LineChart chart = null;
     private LineData lineData = null;
@@ -52,10 +50,10 @@ public class SummaryActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             Bundle data = msg.getData();
-            final float screenUsageMAh = data.getFloat("screen");
-            final float cpuUsageMAh = data.getFloat("cpu");
-            final float wifiMAh = data.getFloat("wifi");
-            final float mobileMAh = data.getFloat("mobile");
+            final float screenUsageMAh = data.getFloat(MeasurementType.SCREEN.getKey());
+            final float cpuUsageMAh = data.getFloat(MeasurementType.CPU.getKey());
+            final float wifiMAh = data.getFloat(MeasurementType.WIFI.getKey());
+            final float mobileMAh = data.getFloat(MeasurementType.MOBILE.getKey());
 
             lastX += 1.0f;
 
@@ -85,40 +83,7 @@ public class SummaryActivity extends AppCompatActivity {
 
         chart = (LineChart) findViewById(R.id.chart);
 
-        final PowerProfilesListener listener = new PowerProfilesListener() {
-            @Override
-            public int getPid() {
-                return NON_EXISTENT_PID;
-            }
-
-            @Override
-            public int getUid() {
-                return NON_EXISTENT_PID;
-            }
-
-            @Override
-            public boolean isSummary() {
-                return true;
-            }
-
-            @Override
-            public List<MeasurementType> getMeasurementTypes() {
-                return Arrays.asList(MeasurementType.CPU, MeasurementType.MOBILE,
-                        MeasurementType.WIFI, MeasurementType.SCREEN);
-            }
-
-            @Override
-            public void onNewData(Map<MeasurementType, Float> data) {
-                final Message message = new Message();
-                final Bundle messageData = new Bundle();
-                messageData.putFloat("screen", data.get(MeasurementType.SCREEN));
-                messageData.putFloat("cpu", data.get(MeasurementType.CPU));
-                messageData.putFloat("wifi", data.get(MeasurementType.WIFI));
-                messageData.putFloat("mobile", data.get(MeasurementType.MOBILE));
-                message.setData(messageData);
-                handler.sendMessage(message);
-            }
-        };
+        final PowerProfilesListener listener = new SummaryPowerProfilesListener(handler);
 
         try {
             powerProfiles.addListener(listener);

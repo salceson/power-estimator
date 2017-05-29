@@ -57,7 +57,7 @@ public class ScreenProvider implements DataProvider {
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid, boolean summary) throws Exception {
+    public void onListenerAdded(int pid, int uid) throws Exception {
     }
 
     @Override

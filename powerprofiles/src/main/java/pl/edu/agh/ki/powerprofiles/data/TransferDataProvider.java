@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class TransferDataProvider implements DataProvider {
     private static final int SECONDS_PER_HOUR = 3600;
@@ -20,7 +21,6 @@ public class TransferDataProvider implements DataProvider {
     private final Map<Integer, Map<MeasurementType, Float>> measurements =
             new ConcurrentHashMap<>();
     private final WifiManager wifi;
-    private boolean summary;
 
     public TransferDataProvider(PowerProfileObject powerProfileObject, Context context) {
         this.powerProfileObject = powerProfileObject;
@@ -74,8 +74,7 @@ public class TransferDataProvider implements DataProvider {
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid, boolean summary) throws Exception {
-        this.summary = summary;
+    public void onListenerAdded(int pid, int uid) throws Exception {
         previousTransferInfos.put(uid, new TransferInfo(uid));
     }
 
@@ -94,7 +93,7 @@ public class TransferDataProvider implements DataProvider {
             if (wifi.isWifiEnabled()) {
                 mobileRxBytes = 0;
                 mobileTxBytes = 0;
-                if (summary) {
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
                     wifiRxBytes = TrafficStats.getTotalRxBytes();
                     wifiTxBytes = TrafficStats.getTotalTxBytes();
                 } else {
@@ -104,7 +103,7 @@ public class TransferDataProvider implements DataProvider {
             } else {
                 wifiRxBytes = 0;
                 wifiTxBytes = 0;
-                if (summary) {
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
                     mobileRxBytes = TrafficStats.getMobileRxBytes();
                     mobileTxBytes = TrafficStats.getMobileTxBytes();
                 } else {
