@@ -34,7 +34,7 @@ public class TransferDataProvider implements DataProvider {
     }
 
     @Override
-    public void takeMeasurements(int pid, int uid) throws Exception {
+    public void takeMeasurements(List<Integer> pids, int uid) throws Exception {
         TransferInfo nextTransferInfo = new TransferInfo(uid);
         TransferInfo previousTransferInfo = previousTransferInfos.get(uid);
         previousTransferInfos.put(uid, nextTransferInfo);
@@ -60,7 +60,7 @@ public class TransferDataProvider implements DataProvider {
 
     @Override
     public float getMeasurement(MeasurementType measurementType,
-                                int pid, int uid) throws Exception {
+                                List<Integer> pids, int uid) throws Exception {
         switch (measurementType) {
             case MOBILE:
             case WIFI:
@@ -74,12 +74,12 @@ public class TransferDataProvider implements DataProvider {
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(List<Integer> pids, int uid) throws Exception {
         previousTransferInfos.put(uid, new TransferInfo(uid));
     }
 
     @Override
-    public void onListenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(List<Integer> pids, int uid) throws Exception {
         previousTransferInfos.remove(uid);
     }
 

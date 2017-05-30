@@ -33,7 +33,7 @@ public class ScreenProvider implements DataProvider {
     }
 
     @Override
-    public void takeMeasurements(int pid, int uid) throws Exception {
+    public void takeMeasurements(List<Integer> pids, int uid) throws Exception {
         double screenDrainMAh = 0;
         if (powerManager.isScreenOn()) {
             float brightness = getInt(context.getContentResolver(), SCREEN_BRIGHTNESS);
@@ -46,7 +46,7 @@ public class ScreenProvider implements DataProvider {
 
     @Override
     public float getMeasurement(MeasurementType measurementType,
-                                int pid, int uid) throws Exception {
+                                List<Integer> pids, int uid) throws Exception {
         if (measurementType != MeasurementType.SCREEN) {
             throw new IllegalArgumentException(
                     "ScreenProvider provides only SCREEN measurements, not of type: "
@@ -57,10 +57,10 @@ public class ScreenProvider implements DataProvider {
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(List<Integer> pids, int uid) throws Exception {
     }
 
     @Override
-    public void onListenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(List<Integer> pids, int uid) throws Exception {
     }
 }

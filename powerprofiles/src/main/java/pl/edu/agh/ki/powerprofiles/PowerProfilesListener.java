@@ -6,7 +6,7 @@ import java.util.Map;
 public interface PowerProfilesListener {
     int NON_EXISTENT_SUMMARY_PID = -1;
 
-    int getPid();
+    List<Integer> getPids();
 
     int getUid();
 

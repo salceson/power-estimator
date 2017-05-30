@@ -8,12 +8,17 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.google.common.base.Joiner;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import pl.edu.agh.ki.powerestimator.R;
 
 public class ProcessListItemAdapter extends BaseAdapter {
+
+    private static final Joiner joiner = Joiner.on(", ");
+
     private List<ProcessListItem> data = new CopyOnWriteArrayList<>();
     private final LayoutInflater layoutInflater;
 
@@ -51,7 +56,7 @@ public class ProcessListItemAdapter extends BaseAdapter {
         name.setText(item.getName());
 
         final TextView pid = (TextView) view.findViewById(R.id.rowProcessPid);
-        pid.setText(Integer.toString(item.getPid(), 10));
+        pid.setText(joiner.join(item.getPids()));
 
         final TextView uid = (TextView) view.findViewById(R.id.rowProcessUid);
         uid.setText(Integer.toString(item.getUid(), 10));

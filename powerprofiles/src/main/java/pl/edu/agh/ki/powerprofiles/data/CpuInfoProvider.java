@@ -36,7 +36,13 @@ public class CpuInfoProvider implements DataProvider {
     }
 
     @Override
-    public void takeMeasurements(int pid, int uid) throws Exception {
+    public void takeMeasurements(List<Integer> pids, int uid) throws Exception {
+        for (Integer pid : pids) {
+            takeMeasurements(pid);
+        }
+    }
+
+    private void takeMeasurements(int pid) throws Exception {
         CpuInfo previousCpuInfo = previousCpuInfos.get(pid);
         CpuInfo nextCpuInfo = readCpuInfo(pid);
         previousCpuInfos.put(pid, nextCpuInfo);
@@ -50,25 +56,33 @@ public class CpuInfoProvider implements DataProvider {
     }
 
     @Override
-    public float getMeasurement(MeasurementType measurementType,
-                                int pid, int uid) throws Exception {
+    public float getMeasurement(final MeasurementType measurementType, List<Integer> pids, int uid) throws Exception {
         if (measurementType != MeasurementType.CPU) {
             throw new IllegalArgumentException(
                     "CpuInfoProvider provides only CPU measurements, not of type: "
                             + measurementType.name()
             );
         }
-        return measurements.get(pid);
+
+        float sum = 0;
+        for (Integer pid : pids) {
+            sum += measurements.get(pid);
+        }
+        return sum;
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid) throws Exception {
-        previousCpuInfos.put(pid, readCpuInfo(pid));
+    public void onListenerAdded(List<Integer> pids, int uid) throws Exception {
+        for (Integer pid : pids) {
+            previousCpuInfos.put(pid, readCpuInfo(pid));
+        }
     }
 
     @Override
-    public void onListenerRemoved(int pid, int uid) throws Exception {
-        previousCpuInfos.remove(pid);
+    public void onListenerRemoved(List<Integer> pids, int uid) throws Exception {
+        for (Integer pid : pids) {
+            previousCpuInfos.remove(pid);
+        }
     }
 
     @SuppressLint("DefaultLocale")

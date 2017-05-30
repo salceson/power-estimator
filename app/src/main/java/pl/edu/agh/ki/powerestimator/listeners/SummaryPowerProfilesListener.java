@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Message;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,8 @@ import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class SummaryPowerProfilesListener implements PowerProfilesListener {
 
+    private static final List<Integer> SUMMARY_PIDS = Collections.singletonList(NON_EXISTENT_SUMMARY_PID);
+
     private final Handler measurementDataHandler;
 
     public SummaryPowerProfilesListener(Handler measurementDataHandler) {
@@ -20,8 +23,8 @@ public class SummaryPowerProfilesListener implements PowerProfilesListener {
     }
 
     @Override
-    public int getPid() {
-        return NON_EXISTENT_SUMMARY_PID;
+    public List<Integer> getPids() {
+        return SUMMARY_PIDS;
     }
 
     @Override

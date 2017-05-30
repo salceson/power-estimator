@@ -61,8 +61,8 @@ public class PowerProfilesImpl implements PowerProfiles {
                 @Override
                 public void run() {
                     for (PowerProfilesListener listener : listeners) {
-                        int pid = listener.getPid();
-                        int uid = listener.getUid();
+                        final List<Integer> pids = listener.getPids();
+                        final int uid = listener.getUid();
 
                         final Map<MeasurementType, Float> measurements = new HashMap<>();
                         final List<DataProvider> providersWithMeasurementsTaken = new ArrayList<>();
@@ -71,7 +71,7 @@ public class PowerProfilesImpl implements PowerProfiles {
                             try {
                                 final DataProvider provider = providerMap.get(type);
                                 if (!providersWithMeasurementsTaken.contains(provider)) {
-                                    provider.takeMeasurements(pid, uid);
+                                    provider.takeMeasurements(pids, uid);
                                     providersWithMeasurementsTaken.add(provider);
                                 }
                             } catch (Exception e) {
@@ -81,7 +81,7 @@ public class PowerProfilesImpl implements PowerProfiles {
 
                             float measurement = Float.NaN;
                             try {
-                                measurement = providerMap.get(type).getMeasurement(type, pid, uid);
+                                measurement = providerMap.get(type).getMeasurement(type, pids, uid);
                             } catch (Exception e) {
                                 Log.e(LOG_TAG, "Error while getting measurements of type "
                                         + type.name(), e);
@@ -106,7 +106,7 @@ public class PowerProfilesImpl implements PowerProfiles {
     public void addListener(PowerProfilesListener listener) throws Exception {
         listeners.add(listener);
         for (DataProvider provider : providers) {
-            provider.onListenerAdded(listener.getPid(), listener.getUid());
+            provider.onListenerAdded(listener.getPids(), listener.getUid());
         }
     }
 
@@ -114,7 +114,7 @@ public class PowerProfilesImpl implements PowerProfiles {
     public void removeListener(PowerProfilesListener listener) throws Exception {
         listeners.remove(listener);
         for (DataProvider provider : providers) {
-            provider.onListenerRemoved(listener.getPid(), listener.getUid());
+            provider.onListenerRemoved(listener.getPids(), listener.getUid());
         }
     }
 }

@@ -13,19 +13,19 @@ import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class ProcessPowerProfilesListener implements PowerProfilesListener {
 
-    private final int pid;
+    private final List<Integer> pids;
     private final int uid;
     private final Handler measurementDataHandler;
 
-    public ProcessPowerProfilesListener(int pid, int uid, Handler measurementDataHandler) {
-        this.pid = pid;
+    public ProcessPowerProfilesListener(List<Integer> pids, int uid, Handler measurementDataHandler) {
+        this.pids = pids;
         this.uid = uid;
         this.measurementDataHandler = measurementDataHandler;
     }
 
     @Override
-    public int getPid() {
-        return pid;
+    public List<Integer> getPids() {
+        return pids;
     }
 
     @Override
