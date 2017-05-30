@@ -160,7 +160,7 @@ public class MyActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // (Setup UI, create PowerProfiles instance, ...)
-        PowerProfilesListener listener = new PowerProfilesListener() {
+        listener = new PowerProfilesListener() {
             // (getPid, getUid, getMeasurementTypes methods...)
             
             @Override
