@@ -60,11 +60,12 @@ import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 class MyActivity extends Activity {
     // (As before)
+    private PowerProfilesListener listener;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // (Setup UI, create PowerProfiles instance, ...)
-        PowerProfilesListener listener = new PowerProfilesListener() {
+        listener = new PowerProfilesListener() {
             @Override
             int getPid() {
                 return Process.myPid();
@@ -93,6 +94,9 @@ class MyActivity extends Activity {
     }
 }
 ```
+
+You can of course pass any `pid` and `uid` to the listener, but you do need to know them beforehand.
+
 Finally, you need to start the measurements:
 
 ```java
@@ -109,6 +113,23 @@ public class MyActivity extends Activity {
 
 You should now see your application's power consumption measurements in the Android's log
  every 1 second.
+ 
+### Cleaning up
+
+When you do not need to perform measurements anymore, you can remove listener and stop them:
+
+```java
+
+public class MyActivity extends Activity {
+    // (As before)
+    
+    @Override
+    public void onStop() {
+        powerProfiles.removeListener(listener);
+        powerProfiles.stopMeasurements();
+    }
+}
+```
 
 ### Threading
 
