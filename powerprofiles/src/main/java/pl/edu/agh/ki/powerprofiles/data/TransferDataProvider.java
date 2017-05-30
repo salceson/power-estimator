@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class TransferDataProvider implements DataProvider {
     private static final int SECONDS_PER_HOUR = 3600;
@@ -48,8 +49,7 @@ public class TransferDataProvider implements DataProvider {
 
         if (previousTransferInfo.wasMobileReceiving(nextTransferInfo)
                 || previousTransferInfo.wasMobileTransmitting(nextTransferInfo)) {
-            mobileDrainMAh +=
-                    powerProfileObject.getAveragePower("radio.active") / SECONDS_PER_HOUR;
+            mobileDrainMAh += powerProfileObject.getAveragePower("radio.active") / SECONDS_PER_HOUR;
         }
 
         final Map<MeasurementType, Float> newMeasurementsForUid = new HashMap<>();
@@ -91,15 +91,25 @@ public class TransferDataProvider implements DataProvider {
 
         TransferInfo(int uid) {
             if (wifi.isWifiEnabled()) {
-                wifiRxBytes = TrafficStats.getUidRxBytes(uid);
-                wifiTxBytes = TrafficStats.getUidTxBytes(uid);
                 mobileRxBytes = 0;
                 mobileTxBytes = 0;
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+                    wifiRxBytes = TrafficStats.getTotalRxBytes();
+                    wifiTxBytes = TrafficStats.getTotalTxBytes();
+                } else {
+                    wifiRxBytes = TrafficStats.getUidRxBytes(uid);
+                    wifiTxBytes = TrafficStats.getUidTxBytes(uid);
+                }
             } else {
-                mobileRxBytes = TrafficStats.getUidRxBytes(uid);
-                mobileTxBytes = TrafficStats.getUidTxBytes(uid);
                 wifiRxBytes = 0;
                 wifiTxBytes = 0;
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+                    mobileRxBytes = TrafficStats.getMobileRxBytes();
+                    mobileTxBytes = TrafficStats.getMobileTxBytes();
+                } else {
+                    mobileRxBytes = TrafficStats.getUidRxBytes(uid);
+                    mobileTxBytes = TrafficStats.getUidTxBytes(uid);
+                }
             }
         }
 

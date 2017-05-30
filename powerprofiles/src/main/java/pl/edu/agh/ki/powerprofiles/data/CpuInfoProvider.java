@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
+import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class CpuInfoProvider implements DataProvider {
     // _SC_CLK_TCK
@@ -18,7 +19,8 @@ public class CpuInfoProvider implements DataProvider {
     private static final int MILLIS_PER_CLOCK_TICK = 1000 / CLOCK_TICKS_PER_SECOND;
     private static final int SECONDS_PER_HOUR = 3600;
     private static final int TICKS_PER_HOUR = CLOCK_TICKS_PER_SECOND * SECONDS_PER_HOUR;
-    private static final String PROC_INFO_FILE_TEMPLATE = "/proc/%d/stat";
+    private static final String PROC_PID_INFO_FILE_TEMPLATE = "/proc/%d/stat";
+    private static final String PROC_INFO_FILE_NAME = "/proc/stat";
 
     private final PowerProfileObject powerProfileObject;
     private final Map<Integer, CpuInfo> previousCpuInfos = new ConcurrentHashMap<>();
@@ -42,8 +44,7 @@ public class CpuInfoProvider implements DataProvider {
         long cpuIdleTime = nextCpuInfo.idleTime - previousCpuInfo.idleTime;
         double cpuDrainMAh = (
                 powerProfileObject.getAveragePower("cpu.idle") * cpuIdleTime / TICKS_PER_HOUR)
-                + (powerProfileObject.getAveragePower("cpu.active")
-                * cpuActiveTime / TICKS_PER_HOUR)
+                + (powerProfileObject.getAveragePower("cpu.active") * cpuActiveTime / TICKS_PER_HOUR)
                 + (powerProfileObject.getAveragePower("cpu.idle") * cpuActiveTime / TICKS_PER_HOUR);
         measurements.put(pid, (float) cpuDrainMAh);
     }
@@ -72,22 +73,37 @@ public class CpuInfoProvider implements DataProvider {
 
     @SuppressLint("DefaultLocale")
     private CpuInfo readCpuInfo(int pid) throws IOException {
-        RandomAccessFile reader = new RandomAccessFile(
-                String.format(PROC_INFO_FILE_TEMPLATE, pid), "r");
+        String path;
+        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+            path = PROC_INFO_FILE_NAME;
+        } else {
+            path = String.format(PROC_PID_INFO_FILE_TEMPLATE, pid);
+        }
+        RandomAccessFile reader = new RandomAccessFile(path, "r");
         String line = reader.readLine();
         reader.close();
 
         String[] split = line.split("\\s+");
 
-        // utime stime cutime cstime
-        long activeTimeTicks = Long.parseLong(split[13]) + Long.parseLong(split[14])
-                + Long.parseLong(split[15]) + Long.parseLong(split[16]);
-        long processStartTimeTicks = Long.parseLong(split[21]);
+        long activeTimeTicks;
+        long idleTimeTicks;
 
-        long systemUptimeMillis = SystemClock.uptimeMillis();
-        long processUptimeTicks = (systemUptimeMillis / MILLIS_PER_CLOCK_TICK)
-                - processStartTimeTicks;
-        long idleTimeTicks = processUptimeTicks - activeTimeTicks;
+        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+            // utime ntime stime
+            activeTimeTicks = Long.parseLong(split[1]) + Long.parseLong(split[2])
+                    + Long.parseLong(split[3]);
+            idleTimeTicks = Long.parseLong(split[4]);
+        } else {
+            // utime stime cutime cstime
+            activeTimeTicks = Long.parseLong(split[13]) + Long.parseLong(split[14])
+                    + Long.parseLong(split[15]) + Long.parseLong(split[16]);
+            long processStartTimeTicks = Long.parseLong(split[21]);
+
+            long systemUptimeMillis = SystemClock.uptimeMillis();
+            long processUptimeTicks = (systemUptimeMillis / MILLIS_PER_CLOCK_TICK)
+                    - processStartTimeTicks;
+            idleTimeTicks = processUptimeTicks - activeTimeTicks;
+        }
 
         return new CpuInfo(activeTimeTicks, idleTimeTicks);
     }

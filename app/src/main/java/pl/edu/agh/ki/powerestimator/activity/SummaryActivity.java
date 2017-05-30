@@ -7,7 +7,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
+import android.view.View;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -18,19 +18,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pl.edu.agh.ki.powerestimator.R;
-import pl.edu.agh.ki.powerestimator.listeners.ProcessPowerProfilesListener;
+import pl.edu.agh.ki.powerestimator.listeners.SummaryPowerProfilesListener;
 import pl.edu.agh.ki.powerestimator.utils.ChartUtils;
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
 import pl.edu.agh.ki.powerprofiles.PowerProfiles;
 import pl.edu.agh.ki.powerprofiles.PowerProfilesImpl;
 import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
-public class ProcessInfoActivity extends AppCompatActivity {
-    private static final String LOG_TAG = "PInfoActivity";
+public class SummaryActivity extends AppCompatActivity {
+
+    private static final String LOG_TAG = "SummaryActivity";
 
     private LineChart chart = null;
     private LineData lineData = null;
 
+    private LineDataSet screenDataSet = null;
     private LineDataSet cpuDataSet = null;
     private LineDataSet wifiDataSet = null;
     private LineDataSet mobileDataSet = null;
@@ -40,6 +42,7 @@ public class ProcessInfoActivity extends AppCompatActivity {
     private final List<Entry> cpuEntries = new ArrayList<>();
     private final List<Entry> wifiEntries = new ArrayList<>();
     private final List<Entry> mobileEntries = new ArrayList<>();
+    private final List<Entry> screenEntries = new ArrayList<>();
 
     private PowerProfiles powerProfiles;
 
@@ -47,17 +50,19 @@ public class ProcessInfoActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             Bundle data = msg.getData();
+            final float screenUsageMAh = data.getFloat(MeasurementType.SCREEN.getKey());
             final float cpuUsageMAh = data.getFloat(MeasurementType.CPU.getKey());
             final float wifiMAh = data.getFloat(MeasurementType.WIFI.getKey());
             final float mobileMAh = data.getFloat(MeasurementType.MOBILE.getKey());
 
             lastX += 1.0f;
 
+            screenDataSet.addEntry(new Entry(lastX, screenUsageMAh));
             cpuDataSet.addEntry(new Entry(lastX, cpuUsageMAh));
             wifiDataSet.addEntry(new Entry(lastX, wifiMAh));
             mobileDataSet.addEntry(new Entry(lastX, mobileMAh));
 
-            ChartUtils.removeOutdatedEntries(cpuDataSet, wifiDataSet, mobileDataSet);
+            ChartUtils.removeOutdatedEntries(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
 
             lineData.notifyDataChanged();
             chart.notifyDataSetChanged();
@@ -68,7 +73,7 @@ public class ProcessInfoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_process_info);
+        setContentView(R.layout.activity_summary);
 
         try {
             powerProfiles = PowerProfilesImpl.getInstance(getApplicationContext());
@@ -76,19 +81,9 @@ public class ProcessInfoActivity extends AppCompatActivity {
             Log.e(LOG_TAG, "Could not create PowerProfiles class", e);
         }
 
-        final Intent intent = getIntent();
-        final Bundle extra = intent.getExtras();
-
-        final int pid = extra.getInt("pid");
-        final int uid = extra.getInt("uid");
-        final String name = extra.getString("name");
-
-        final TextView view = (TextView) findViewById(R.id.processName);
-        view.setText(name);
-
         chart = (LineChart) findViewById(R.id.chart);
 
-        final PowerProfilesListener listener = new ProcessPowerProfilesListener(pid, uid, handler);
+        final PowerProfilesListener listener = new SummaryPowerProfilesListener(handler);
 
         try {
             powerProfiles.addListener(listener);
@@ -96,15 +91,21 @@ public class ProcessInfoActivity extends AppCompatActivity {
             Log.e(ProcessInfoActivity.class.getSimpleName(), "Error while adding listener", e);
         }
 
+        screenEntries.add(new Entry(lastX, 0.0f));
         cpuEntries.add(new Entry(lastX, 0.0f));
         wifiEntries.add(new Entry(lastX, 0.0f));
         mobileEntries.add(new Entry(lastX, 0.0f));
 
-        cpuDataSet = ChartUtils.createStandardLineDataSet(cpuEntries, "CPU usage [mAh]", Color.rgb(255, 0, 0));
-        wifiDataSet = ChartUtils.createStandardLineDataSet(wifiEntries, "WiFi usage [mAh]", Color.rgb(0, 255, 0));
-        mobileDataSet = ChartUtils.createStandardLineDataSet(mobileEntries, "3G usage [mAh]", Color.rgb(0, 0, 255));
+        screenDataSet = ChartUtils.createStandardLineDataSet(screenEntries, "Screen usage [mAh]",
+                Color.rgb(255, 255, 0));
+        cpuDataSet = ChartUtils.createStandardLineDataSet(cpuEntries, "CPU usage [mAh]",
+                Color.rgb(255, 0, 0));
+        wifiDataSet = ChartUtils.createStandardLineDataSet(wifiEntries, "WiFi usage [mAh]",
+                Color.rgb(0, 255, 0));
+        mobileDataSet = ChartUtils.createStandardLineDataSet(mobileEntries, "3G usage [mAh]",
+                Color.rgb(0, 0, 255));
 
-        lineData = new LineData(cpuDataSet, wifiDataSet, mobileDataSet);
+        lineData = new LineData(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
 
         chart.setData(lineData);
         chart.getAxisRight().setDrawLabels(false);
@@ -122,5 +123,10 @@ public class ProcessInfoActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         powerProfiles.stopMeasurements();
+    }
+
+    public void showProcessesList(View view) {
+        final Intent intent = new Intent(SummaryActivity.this, ProcessesListActivity.class);
+        startActivity(intent);
     }
 }
