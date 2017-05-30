@@ -88,7 +88,7 @@ public class CpuInfoProvider implements DataProvider {
     @SuppressLint("DefaultLocale")
     private CpuInfo readCpuInfo(int pid) throws IOException {
         String path;
-        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_UID) {
             path = PROC_INFO_FILE_NAME;
         } else {
             path = String.format(PROC_PID_INFO_FILE_TEMPLATE, pid);
@@ -102,7 +102,7 @@ public class CpuInfoProvider implements DataProvider {
         long activeTimeTicks;
         long idleTimeTicks;
 
-        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+        if (pid == PowerProfilesListener.NON_EXISTENT_SUMMARY_UID) {
             // utime ntime stime
             activeTimeTicks = Long.parseLong(split[1]) + Long.parseLong(split[2])
                     + Long.parseLong(split[3]);

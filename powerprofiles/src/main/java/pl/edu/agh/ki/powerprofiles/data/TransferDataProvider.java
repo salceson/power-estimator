@@ -93,7 +93,7 @@ public class TransferDataProvider implements DataProvider {
             if (wifi.isWifiEnabled()) {
                 mobileRxBytes = 0;
                 mobileTxBytes = 0;
-                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_UID) {
                     wifiRxBytes = TrafficStats.getTotalRxBytes();
                     wifiTxBytes = TrafficStats.getTotalTxBytes();
                 } else {
@@ -103,7 +103,7 @@ public class TransferDataProvider implements DataProvider {
             } else {
                 wifiRxBytes = 0;
                 wifiTxBytes = 0;
-                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_UID) {
                     mobileRxBytes = TrafficStats.getMobileRxBytes();
                     mobileTxBytes = TrafficStats.getMobileTxBytes();
                 } else {
