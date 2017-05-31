@@ -54,6 +54,8 @@ import android.util.Log;
 import android.os.Process;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import pl.edu.agh.ki.powerprofiles.MeasurementType;
 import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
@@ -67,8 +69,8 @@ class MyActivity extends Activity {
         // (Setup UI, create PowerProfiles instance, ...)
         listener = new PowerProfilesListener() {
             @Override
-            int getPid() {
-                return Process.myPid();
+            List<Integer> getPids() {
+                return Collections.singletonList(Process.myPid());
             }
         
             @Override
@@ -95,7 +97,9 @@ class MyActivity extends Activity {
 }
 ```
 
-You can of course pass any `pid` and `uid` to the listener, but you do need to know them beforehand.
+You can of course pass any `pids` and `uid` to the listener, but you do need to know them
+ beforehand. We've designed `pids` to be a list because an application can have one UID
+  and many PIDs, as it can have many processes.
 
 Finally, you need to start the measurements:
 
@@ -116,7 +120,8 @@ You should now see your application's power consumption measurements in the Andr
  
 ### Cleaning up
 
-When you do not need to perform measurements anymore, you can remove listener and stop them:
+When you do not need to perform measurements anymore, you can remove listener and stop
+ the measurements. For example:
 
 ```java
 
@@ -161,7 +166,7 @@ public class MyActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         // (Setup UI, create PowerProfiles instance, ...)
         listener = new PowerProfilesListener() {
-            // (getPid, getUid, getMeasurementTypes methods...)
+            // (getPids, getUid, getMeasurementTypes methods...)
             
             @Override
             void onMeasurementData(Map<MeasurementType, Float> data) {
@@ -182,7 +187,8 @@ public class MyActivity extends Activity {
 ### Measurements of the whole Android device power consumption
 
 If you want to collect the data of the whole Android device power consumption, simply put
- `NON_EXISTENT_SUMMARY_PID` constant as a result of the `getPid` and `getUid` methods.
+ `NON_EXISTENT_SUMMARY_PIDS` constant as the result of the `getPid` method and
+  `NON_EXISTENT_SUMMARY_UID` as result of the `getUid` method.
  
-The constant is defined in `PowerProfilesListener` interface, therefore you do not need to
- import it from anywhere else.
+These constants are defined in `PowerProfilesListener` interface, therefore you do not need to
+ import them from anywhere else.
