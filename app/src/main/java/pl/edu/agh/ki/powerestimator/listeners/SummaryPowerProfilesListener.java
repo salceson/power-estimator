@@ -20,13 +20,13 @@ public class SummaryPowerProfilesListener implements PowerProfilesListener {
     }
 
     @Override
-    public int getPid() {
-        return NON_EXISTENT_SUMMARY_PID;
+    public List<Integer> getPids() {
+        return NON_EXISTENT_SUMMARY_PIDS;
     }
 
     @Override
     public int getUid() {
-        return NON_EXISTENT_SUMMARY_PID;
+        return NON_EXISTENT_SUMMARY_UID;
     }
 
     @Override

@@ -11,13 +11,18 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 import com.jaredrummler.android.processes.AndroidProcesses;
 import com.jaredrummler.android.processes.models.AndroidAppProcess;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -58,9 +63,9 @@ public class ProcessesListActivity extends AppCompatActivity {
                 final ProcessListItem item = (ProcessListItem) adapter.getItem(position);
                 final Intent intent =
                         new Intent(ProcessesListActivity.this, ProcessInfoActivity.class);
-                intent.putExtra("pid", item.getPid());
-                intent.putExtra("uid", item.getUid());
-                intent.putExtra("name", item.getName());
+                intent.putExtra(ProcessInfoActivity.UID_KEY, item.getUid());
+                intent.putExtra(ProcessInfoActivity.NAME_KEY, item.getName());
+                intent.putIntegerArrayListExtra(ProcessInfoActivity.PIDS_KEY, Lists.newArrayList(item.getPids()));
                 startActivity(intent);
             }
         });
@@ -75,7 +80,18 @@ public class ProcessesListActivity extends AppCompatActivity {
         future = service.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                ArrayList<ProcessListItem> newProcesses = new ArrayList<>();
+                final Multimap<AppInfo, Integer> appProcesses = TreeMultimap.create(new Comparator<AppInfo>() {
+                    @Override
+                    public int compare(AppInfo o1, AppInfo o2) {
+                        return o1.name.compareTo(o2.name);
+                    }
+                }, new Comparator<Integer>() {
+                    @Override
+                    public int compare(Integer o1, Integer o2) {
+                        return o1.compareTo(o2);
+                    }
+                });
+
                 final List<AndroidAppProcess> processes = AndroidProcesses.getRunningAppProcesses();
                 for (AndroidAppProcess process : processes) {
                     String processName;
@@ -86,17 +102,19 @@ public class ProcessesListActivity extends AppCompatActivity {
                         processName = process.getPackageName();
                     }
 
+                    final AppInfo appInfo = new AppInfo(process.uid, processName);
+                    appProcesses.put(appInfo, process.pid);
+                }
+
+                final ArrayList<ProcessListItem> newProcesses = new ArrayList<>();
+                for (Map.Entry<AppInfo, Collection<Integer>> appInfoCollectionEntry : appProcesses.asMap().entrySet()) {
+                    final AppInfo appInfo = appInfoCollectionEntry.getKey();
+                    final List<Integer> pids = Lists.newArrayList(appInfoCollectionEntry.getValue());
                     final ProcessListItem item = new ProcessListItem(
-                            process.uid, process.pid, processName
+                            appInfo.uid, pids, appInfo.name
                     );
                     newProcesses.add(item);
                 }
-                Collections.sort(newProcesses, new Comparator<ProcessListItem>() {
-                    @Override
-                    public int compare(ProcessListItem o1, ProcessListItem o2) {
-                        return o1.getName().compareTo(o2.getName());
-                    }
-                });
                 Message message = new Message();
                 Bundle data = new Bundle();
                 data.putParcelableArrayList("processes", newProcesses);
@@ -111,5 +129,29 @@ public class ProcessesListActivity extends AppCompatActivity {
         super.onPause();
         future.cancel(true);
         future = null;
+    }
+
+    private static class AppInfo {
+        final int uid;
+        final String name;
+
+        private AppInfo(int uid, String name) {
+            this.uid = uid;
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AppInfo appInfo = (AppInfo) o;
+            return uid == appInfo.uid &&
+                    Objects.equal(name, appInfo.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(uid, name);
+        }
     }
 }

@@ -34,7 +34,7 @@ public class TransferDataProvider implements DataProvider {
     }
 
     @Override
-    public void takeMeasurements(int pid, int uid) throws Exception {
+    public void takeMeasurements(List<Integer> pids, int uid) throws Exception {
         TransferInfo nextTransferInfo = new TransferInfo(uid);
         TransferInfo previousTransferInfo = previousTransferInfos.get(uid);
         previousTransferInfos.put(uid, nextTransferInfo);
@@ -60,7 +60,7 @@ public class TransferDataProvider implements DataProvider {
 
     @Override
     public float getMeasurement(MeasurementType measurementType,
-                                int pid, int uid) throws Exception {
+                                List<Integer> pids, int uid) throws Exception {
         switch (measurementType) {
             case MOBILE:
             case WIFI:
@@ -74,12 +74,12 @@ public class TransferDataProvider implements DataProvider {
     }
 
     @Override
-    public void onListenerAdded(int pid, int uid) throws Exception {
+    public void onListenerAdded(List<Integer> pids, int uid) throws Exception {
         previousTransferInfos.put(uid, new TransferInfo(uid));
     }
 
     @Override
-    public void onListenerRemoved(int pid, int uid) throws Exception {
+    public void onListenerRemoved(List<Integer> pids, int uid) throws Exception {
         previousTransferInfos.remove(uid);
     }
 
@@ -93,7 +93,7 @@ public class TransferDataProvider implements DataProvider {
             if (wifi.isWifiEnabled()) {
                 mobileRxBytes = 0;
                 mobileTxBytes = 0;
-                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_UID) {
                     wifiRxBytes = TrafficStats.getTotalRxBytes();
                     wifiTxBytes = TrafficStats.getTotalTxBytes();
                 } else {
@@ -103,7 +103,7 @@ public class TransferDataProvider implements DataProvider {
             } else {
                 wifiRxBytes = 0;
                 wifiTxBytes = 0;
-                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_PID) {
+                if (uid == PowerProfilesListener.NON_EXISTENT_SUMMARY_UID) {
                     mobileRxBytes = TrafficStats.getMobileRxBytes();
                     mobileTxBytes = TrafficStats.getMobileTxBytes();
                 } else {

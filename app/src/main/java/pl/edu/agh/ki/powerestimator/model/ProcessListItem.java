@@ -3,9 +3,13 @@ package pl.edu.agh.ki.powerestimator.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.common.primitives.Ints;
+
+import java.util.List;
+
 public class ProcessListItem implements Parcelable {
     private final int uid;
-    private final int pid;
+    private final List<Integer> pids;
     private final String name;
 
     public static final Parcelable.Creator<ProcessListItem> CREATOR =
@@ -13,9 +17,11 @@ public class ProcessListItem implements Parcelable {
                 @Override
                 public ProcessListItem createFromParcel(Parcel source) {
                     int uid = source.readInt();
-                    int pid = source.readInt();
+                    int pidCount = source.readInt();
+                    int[] pids = new int[pidCount];
+                    source.readIntArray(pids);
                     String name = source.readString();
-                    return new ProcessListItem(uid, pid, name);
+                    return new ProcessListItem(uid, Ints.asList(pids), name);
                 }
 
                 @Override
@@ -24,9 +30,9 @@ public class ProcessListItem implements Parcelable {
                 }
             };
 
-    public ProcessListItem(int uid, int pid, String name) {
+    public ProcessListItem(int uid, List<Integer> pids, String name) {
         this.uid = uid;
-        this.pid = pid;
+        this.pids = pids;
         this.name = name;
     }
 
@@ -34,8 +40,8 @@ public class ProcessListItem implements Parcelable {
         return uid;
     }
 
-    public int getPid() {
-        return pid;
+    public List<Integer> getPids() {
+        return pids;
     }
 
     public String getName() {
@@ -50,7 +56,8 @@ public class ProcessListItem implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(uid);
-        dest.writeInt(pid);
+        dest.writeInt(pids.size());
+        dest.writeIntArray(Ints.toArray(pids));
         dest.writeString(name);
     }
 }

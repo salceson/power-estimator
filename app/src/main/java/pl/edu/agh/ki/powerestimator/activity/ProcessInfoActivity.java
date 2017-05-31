@@ -27,6 +27,9 @@ import pl.edu.agh.ki.powerprofiles.PowerProfilesListener;
 
 public class ProcessInfoActivity extends AppCompatActivity {
     private static final String LOG_TAG = "PInfoActivity";
+    public static final String PIDS_KEY = "pid";
+    public static final String UID_KEY = "uid";
+    public static final String NAME_KEY = "name";
 
     private LineChart chart = null;
     private LineData lineData = null;
@@ -79,16 +82,16 @@ public class ProcessInfoActivity extends AppCompatActivity {
         final Intent intent = getIntent();
         final Bundle extra = intent.getExtras();
 
-        final int pid = extra.getInt("pid");
-        final int uid = extra.getInt("uid");
-        final String name = extra.getString("name");
+        final int uid = extra.getInt(UID_KEY);
+        final String name = extra.getString(NAME_KEY);
+        final List<Integer> pids = extra.getIntegerArrayList(PIDS_KEY);
 
         final TextView view = (TextView) findViewById(R.id.processName);
         view.setText(name);
 
         chart = (LineChart) findViewById(R.id.chart);
 
-        final PowerProfilesListener listener = new ProcessPowerProfilesListener(pid, uid, handler);
+        final PowerProfilesListener listener = new ProcessPowerProfilesListener(pids, uid, handler);
 
         try {
             powerProfiles.addListener(listener);

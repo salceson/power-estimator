@@ -2,5 +2,5 @@
     <string name="app_name">Power Estimator</string>
     <string name="pid">PID:</string>
     <string name="uid">UID:</string>
-    <string name="processes_list">Processes list</string>
+    <string name="processes_list">Applications list</string>
 </resources>
