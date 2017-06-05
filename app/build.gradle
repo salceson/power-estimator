@@ -26,7 +26,7 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.1'
-    compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
+    compile 'com.github.salceson:MPAndroidChart:v3.0.3'
     compile 'com.jaredrummler:android-processes:1.0.9'
     compile 'com.google.guava:guava:20.0'
     compile project(':powerprofiles')

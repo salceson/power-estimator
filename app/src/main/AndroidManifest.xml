@@ -13,9 +13,7 @@
         android:theme="@style/AppTheme">
         <activity android:name=".activity.ProcessInfoActivity" />
         <activity android:name=".activity.ProcessesListActivity" />
-        <activity
-            android:name=".activity.SummaryActivity"
-            android:label="Power Estimator - summary">
+        <activity android:name=".activity.SummaryActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

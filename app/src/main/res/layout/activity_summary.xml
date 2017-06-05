@@ -6,17 +6,29 @@
     android:orientation="vertical"
     tools:context="pl.edu.agh.ki.powerestimator.activity.SummaryActivity">
 
+    <TextView
+        android:id="@+id/summaryText"
+        android:layout_weight="0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/summary"
+        android:textAlignment="center"
+        android:textColor="@color/colorPrimary"
+        android:textSize="30sp" />
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/chart"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <Button
         android:id="@+id/button"
+        android:layout_weight="0"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorAccent"
         android:onClick="showProcessesList"
         android:text="@string/processes_list"
         android:textColor="@android:color/white" />
-
-    <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/chart"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 </LinearLayout>

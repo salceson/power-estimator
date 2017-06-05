@@ -6,8 +6,8 @@ import java.util.Map;
 
 public interface PowerProfilesListener {
     int NON_EXISTENT_SUMMARY_UID = -1;
-
-    List<Integer> NON_EXISTENT_SUMMARY_PIDS = Collections.singletonList(NON_EXISTENT_SUMMARY_UID);
+    int NON_EXISTENT_SUMMARY_PID = -1;
+    List<Integer> NON_EXISTENT_SUMMARY_PIDS = Collections.singletonList(NON_EXISTENT_SUMMARY_PID);
 
     List<Integer> getPids();
 

@@ -7,6 +7,15 @@
     android:orientation="vertical"
     tools:context="pl.edu.agh.ki.powerestimator.activity.ProcessesListActivity">
 
+    <TextView
+        android:id="@+id/summaryText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/processes_list"
+        android:textAlignment="center"
+        android:textColor="@color/colorPrimary"
+        android:textSize="30sp" />
+
     <ListView
         android:id="@+id/processesListView"
         android:layout_width="match_parent"
