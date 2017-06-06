@@ -19,7 +19,7 @@ public class ChartUtils {
     private static final float LINE_WIDTH = 2f;
     private static final float TEXT_SIZE = 14f;
     private static final int MAX_ENTRIES = 50;
-    private static final float LEGEND_SIZE = 0.33f;
+    private static final float LEGEND_SIZE = 0.75f;
 
     public static final int YELLOW = Color.rgb(255, 255, 0);
     public static final int RED = Color.rgb(255, 0, 0);
