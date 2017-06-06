@@ -4,15 +4,34 @@ Power Estimator application and library for Android devices.
 
 ## Application
 
+The application is compatible with Android versions 4.4 - 6.0.
+
 The application can show user the estimated current power consumption (in mAh) of the following
  components:
 
   * Screen (only consumption by the whole device),
   * CPU,
-  * Wifi,
-  * Mobile network.
+  * WiFi,
+  * Mobile network,
+  * Summary (sum of the above).
   
 The consumption is shown both for the whole device and for any of the processes running on it.
+
+After launching the application, a summary screen is shown to user:
+
+![Summary screen](screenshots/summary.png?raw=true "Summary screen")
+
+On that screen user can see the estimated power consumption of the components mentioned
+ above - it contains usage from whole Android phone (all processes).
+ 
+User can click on "Applications list" to see the applications running on the phone:
+
+![Applications list screen](screenshots/applications-list.png?raw=true "Applications list screen")
+
+After clicking on the application, he can see the power consumption of the CPU, WiFi,
+ Mobile network of that particular application:
+ 
+![Application screen](screenshots/application.png?raw=true "Application screen")
 
 ## Library
 
