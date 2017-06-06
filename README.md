@@ -19,19 +19,19 @@ The consumption is shown both for the whole device and for any of the processes 
 
 After launching the application, a summary screen is shown to user:
 
-<img src="screenshots/summary.png?raw=true" alt="Summary screen" style="width: 400px;" />
+<img src="screenshots/summary.png?raw=true" alt="Summary screen" width="400" />
 
 On that screen user can see the estimated power consumption of the components mentioned
  above - it contains usage from whole Android phone (all processes).
  
 User can click on "Applications list" to see the applications running on the phone:
 
-<img src="screenshots/applications-list.png?raw=true" alt="Applications list screen" style="width: 400px;" />
+<img src="screenshots/applications-list.png?raw=true" alt="Applications list screen" width="400" />
 
 After clicking on the application, he can see the power consumption of the CPU, WiFi,
  Mobile network of that particular application:
  
-<img src="screenshots/applications.png?raw=true" alt="Application screen" style="width: 400px;" />
+<img src="screenshots/applications.png?raw=true" alt="Application screen" width="400" />
 
 ## Library
 
