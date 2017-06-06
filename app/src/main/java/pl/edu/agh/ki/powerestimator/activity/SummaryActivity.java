@@ -1,7 +1,7 @@
 package pl.edu.agh.ki.powerestimator.activity;
 
 import android.content.Intent;
-import android.graphics.Color;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -36,6 +36,7 @@ public class SummaryActivity extends AppCompatActivity {
     private LineDataSet cpuDataSet = null;
     private LineDataSet wifiDataSet = null;
     private LineDataSet mobileDataSet = null;
+    private LineDataSet summaryDataSet = null;
 
     private float lastX = 0.0f;
 
@@ -43,6 +44,7 @@ public class SummaryActivity extends AppCompatActivity {
     private final List<Entry> wifiEntries = new ArrayList<>();
     private final List<Entry> mobileEntries = new ArrayList<>();
     private final List<Entry> screenEntries = new ArrayList<>();
+    private final List<Entry> summaryEntries = new ArrayList<>();
 
     private PowerProfiles powerProfiles;
 
@@ -54,6 +56,7 @@ public class SummaryActivity extends AppCompatActivity {
             final float cpuUsageMAh = data.getFloat(MeasurementType.CPU.getKey());
             final float wifiMAh = data.getFloat(MeasurementType.WIFI.getKey());
             final float mobileMAh = data.getFloat(MeasurementType.MOBILE.getKey());
+            final float summaryMAh = screenUsageMAh + cpuUsageMAh + wifiMAh + mobileMAh;
 
             lastX += 1.0f;
 
@@ -61,8 +64,10 @@ public class SummaryActivity extends AppCompatActivity {
             cpuDataSet.addEntry(new Entry(lastX, cpuUsageMAh));
             wifiDataSet.addEntry(new Entry(lastX, wifiMAh));
             mobileDataSet.addEntry(new Entry(lastX, mobileMAh));
+            summaryDataSet.addEntry(new Entry(lastX, summaryMAh));
 
-            ChartUtils.removeOutdatedEntries(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
+            ChartUtils.removeOutdatedEntries(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet,
+                    summaryDataSet);
 
             lineData.notifyDataChanged();
             chart.notifyDataSetChanged();
@@ -88,28 +93,34 @@ public class SummaryActivity extends AppCompatActivity {
         try {
             powerProfiles.addListener(listener);
         } catch (Exception e) {
-            Log.e(ProcessInfoActivity.class.getSimpleName(), "Error while adding listener", e);
+            Log.e(LOG_TAG, "Error while adding listener", e);
         }
 
         screenEntries.add(new Entry(lastX, 0.0f));
         cpuEntries.add(new Entry(lastX, 0.0f));
         wifiEntries.add(new Entry(lastX, 0.0f));
         mobileEntries.add(new Entry(lastX, 0.0f));
+        summaryEntries.add(new Entry(lastX, 0.0f));
 
-        screenDataSet = ChartUtils.createStandardLineDataSet(screenEntries, "Screen usage [mAh]",
-                Color.rgb(255, 255, 0));
-        cpuDataSet = ChartUtils.createStandardLineDataSet(cpuEntries, "CPU usage [mAh]",
-                Color.rgb(255, 0, 0));
-        wifiDataSet = ChartUtils.createStandardLineDataSet(wifiEntries, "WiFi usage [mAh]",
-                Color.rgb(0, 255, 0));
-        mobileDataSet = ChartUtils.createStandardLineDataSet(mobileEntries, "3G usage [mAh]",
-                Color.rgb(0, 0, 255));
+        Resources resources = getResources();
 
-        lineData = new LineData(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet);
+        screenDataSet = ChartUtils.createStandardLineDataSet(screenEntries,
+                resources.getString(R.string.screen_usage), ChartUtils.YELLOW);
+        cpuDataSet = ChartUtils.createStandardLineDataSet(cpuEntries,
+                resources.getString(R.string.cpu_usage), ChartUtils.RED);
+        wifiDataSet = ChartUtils.createStandardLineDataSet(wifiEntries,
+                resources.getString(R.string.wifi_usage), ChartUtils.GREEN);
+        mobileDataSet = ChartUtils.createStandardLineDataSet(mobileEntries,
+                resources.getString(R.string.mobile_usage), ChartUtils.BLUE);
+        summaryDataSet = ChartUtils.createStandardLineDataSet(summaryEntries,
+                resources.getString(R.string.all_usage), ChartUtils.BLACK);
+
+        lineData = new LineData(screenDataSet, cpuDataSet, wifiDataSet, mobileDataSet,
+                summaryDataSet);
+
+        ChartUtils.setupChart(chart, resources);
 
         chart.setData(lineData);
-        chart.getAxisRight().setDrawLabels(false);
-        chart.setDescription(null);
         chart.invalidate();
     }
 
